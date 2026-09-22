@@ -4,1027 +4,1011 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Petualangan City Tour - BBGTK DIY</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Blockly Library -->
-    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
-    <!-- FontAwesome Icons -->
+    <!-- FontAwesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Tone.js for Sound Effects -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Blockly Library -->
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <!-- Tone.js for Web Audio Synthesis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-main: #f1f5f9;
+            --panel-bg: #ffffff;
+            --text-dark: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             user-select: none;
         }
-        h1, h2, h3, .font-heading {
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HEADER BANNER */
+        header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-bbgtk {
+            height: 48px;
+            width: auto;
+            object-fit: contain;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .header-title h1 {
             font-family: 'Fredoka', cursive;
+            font-size: 1.5rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+
+        .header-title p {
+            font-size: 0.8rem;
+            opacity: 0.9;
         }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
+
+        .header-mission-select {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 16px;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
         }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
+
+        .maskot-siyo {
+            height: 42px;
+            width: auto;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #10b981;
+
+        .mission-dropdown-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
-        .blocklySvg {
-            background-color: #1e293b !important;
-            border-radius: 0.75rem;
+
+        .mission-dropdown-wrapper label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            color: #dbeafe;
         }
-        .blocklyToolboxDiv {
-            background-color: #0f172a !important;
-            border-right: 1px solid #334155;
-            padding: 4px;
+
+        select#missionSelect {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            color: var(--text-dark);
+            background: white;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .blocklyTreeLabel {
-            color: #f8fafc !important;
+
+        /* MAIN APP CONTENT - SWAPPED LAYOUT */
+        .app-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 460px 1fr; /* LEFT: Blockly Controls, RIGHT: Map Canvas */
+            gap: 12px;
+            padding: 12px;
+            overflow: hidden;
         }
-        canvas {
-            display: block;
-            touch-action: none;
+
+        /* LEFT PANEL: BLOCKLY WORKSPACE & CONTROLS */
+        .left-panel {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
         }
+
+        .panel-header {
+            padding: 10px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            font-size: 1rem;
+            color: #334155;
+            font-family: 'Fredoka', cursive;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: none;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-run { background-color: var(--secondary); color: white; flex: 2; }
+        .btn-run:hover { background-color: #059669; transform: translateY(-1px); }
+
+        .btn-reset { background-color: #f1f5f9; color: #475569; flex: 1; }
+        .btn-reset:hover { background-color: #e2e8f0; }
+
+        .btn-shuffle { background-color: #8b5cf6; color: white; flex: 1.2; }
+        .btn-shuffle:hover { background-color: #7c3aed; }
+
+        #blocklyDiv {
+            flex: 1;
+            width: 100%;
+            min-height: 250px;
+        }
+
+        .instruction-card {
+            padding: 12px 16px;
+            background: #eff6ff;
+            border-top: 1px solid #bfdbfe;
+            color: #1e40af;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .instruction-card i {
+            font-size: 1.2rem;
+            margin-top: 2px;
+            color: #3b82f6;
+        }
+
+        /* RIGHT PANEL: CITY MAP CANVAS */
+        .right-panel {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+
+        .map-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1a2332;
+            padding: 10px;
+            position: relative;
+        }
+
+        #cityCanvas {
+            background-color: #2d3748;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(-50px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success { background-color: var(--secondary); }
+        .toast-error { background-color: var(--danger); }
+        .toast-info { background-color: var(--primary); }
+
+        /* Custom Blockly Styling */
+        .blocklyTreeLabel { font-family: 'Nunito', sans-serif; font-weight: 700; }
+        .blocklyText { font-family: 'Nunito', sans-serif; font-weight: 700; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
 
-    <header class="bg-slate-900 border-b border-slate-800 text-white shadow-xl sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap justify-between items-center gap-3">
-            
-            <!-- Left Side: BBGTK DIY Logo & Title -->
-            <div class="flex items-center gap-3">
-                <img src="bbgtk diy logo.png" alt="BBGTK DIY Logo" class="h-10 md:h-12 w-auto object-contain bg-white/10 p-1 rounded-lg border border-slate-700" onerror="this.onerror=null; this.src='https://placehold.co/120x50/1e293b/10b981?text=BBGTK+DIY';">
-                <div>
-                    <h1 class="text-lg md:text-xl font-bold text-emerald-400 tracking-wide flex items-center gap-2">
-                        Petualangan City Tour
-                    </h1>
-                    <p class="text-[11px] text-slate-400 hidden sm:block">Numerasi, Logika & Pemahaman Spasial Kota Si Yo</p>
-                </div>
+    <!-- HEADER BANNER -->
+    <header>
+        <div class="header-brand">
+            <img src="bbgtk diy logo.png" alt="BBGTK DIY Logo" class="logo-bbgtk" onerror="this.src='https://via.placeholder.com/120x40?text=BBGTK+DIY'">
+            <div class="header-title">
+                <h1><i class="fa-solid fa-map-location-dot"></i> City Tour Numerasi & Spasial</h1>
+                <p>Aktivitas Pemrograman Logika & Navigasi Kota</p>
             </div>
+        </div>
 
-            <!-- Right Side: Si Yo Mascot & Mission Selector -->
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-2 bg-slate-800/90 p-1.5 pl-2.5 rounded-xl border border-slate-700">
-                    <img src="maskot-siyo.png" alt="Maskot Si Yo" class="h-9 md:h-11 w-auto object-contain drop-shadow" onerror="this.onerror=null; this.src='https://placehold.co/80x80/10b981/ffffff?text=Si+Yo';">
-                    <div class="flex items-center gap-1.5">
-                        <label for="levelSelect" class="text-xs font-semibold text-slate-300 flex items-center gap-1">
-                            <i class="fa-solid fa-map-pin text-amber-400"></i> Misi:
-                        </label>
-                        <select id="levelSelect" class="bg-slate-900 text-emerald-300 text-xs md:text-sm font-semibold py-1 px-2.5 rounded-lg border border-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer">
-                        </select>
-                    </div>
-                </div>
+        <div class="header-mission-select">
+            <img src="maskot-siyo.png" alt="Maskot Si Yo" class="maskot-siyo" onerror="this.src='https://via.placeholder.com/40x40?text=SiYo'">
+            <div class="mission-dropdown-wrapper">
+                <label for="missionSelect">Pilih Misi Perjalanan:</label>
+                <select id="missionSelect" onchange="changeMission()">
+                    <!-- Options generated dynamically -->
+                </select>
             </div>
-
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto p-3 md:p-4 flex flex-col lg:flex-row gap-4">
-
-        <!-- LEFT PANEL: Blockly Workspace & Controls -->
-        <section class="lg:w-1/2 flex flex-col gap-3 order-2 lg:order-1 min-h-[550px]">
-            
-            <!-- Controls Bar -->
-            <div class="bg-slate-900 p-2.5 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-2 shadow-md">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <button id="btnRun" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-slate-950 font-bold py-2 px-4 rounded-xl shadow-lg transition flex items-center gap-2 text-xs md:text-sm">
-                        <i class="fa-solid fa-play"></i> Jalankan Kode
-                    </button>
-                    <button id="btnReset" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-semibold py-2 px-3 rounded-xl transition border border-slate-700 text-xs md:text-sm">
-                        <i class="fa-solid fa-rotate-right"></i> Reset
-                    </button>
-                    <button id="btnShuffle" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold py-2 px-3 rounded-xl transition border border-amber-500/40 text-xs flex items-center gap-1.5">
-                        <i class="fa-solid fa-shuffle"></i> Acak Posisi Landmark
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
-                    <span class="text-slate-400 font-medium px-1 text-[11px]"><i class="fa-solid fa-bolt text-amber-400"></i> Speed:</span>
-                    <button id="speedSlow" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-semibold text-[10px] hover:bg-slate-700">Pelan</button>
-                    <button id="speedFast" class="px-2 py-0.5 rounded-lg bg-emerald-500 text-slate-950 font-bold text-[10px]">Cepat</button>
-                </div>
+    <!-- MAIN APP CONTENT (SWAPPED: LEFT=BLOCKLY, RIGHT=MAP) -->
+    <div class="app-container">
+        
+        <!-- LEFT PANEL: BLOCKLY & CONTROLS -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-code"></i> Blok Pemrograman</h2>
             </div>
 
-            <!-- Mission Banner -->
-            <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex items-center justify-between gap-3 shadow-md">
-                <div class="flex items-center gap-3 flex-1">
-                    <div class="bg-amber-500/20 text-amber-400 p-2.5 rounded-xl text-xl flex-shrink-0 border border-amber-500/30">
-                        <i class="fa-solid fa-compass-drafting"></i>
-                    </div>
-                    <div>
-                        <h2 id="missionTitle" class="text-sm md:text-base font-bold text-emerald-400 font-heading">Misi Loading...</h2>
-                        <p id="missionDesc" class="text-xs text-slate-300 mt-0.5 leading-relaxed">Menyiapkan instruksi jalan...</p>
-                    </div>
-                </div>
-
-                <!-- Compass Rose -->
-                <div class="bg-slate-950/80 border border-slate-800 p-1.5 rounded-xl text-[9px] font-bold text-slate-400 w-11 text-center shadow-inner flex flex-col justify-between flex-shrink-0">
-                    <span class="text-rose-500 font-black">U</span>
-                    <div class="flex justify-between my-0.5 text-[8px]">
-                        <span>B</span>
-                        <span>T</span>
-                    </div>
-                    <span class="text-emerald-500">S</span>
-                </div>
+            <div class="control-buttons">
+                <button class="btn btn-run" onclick="runCode()">
+                    <i class="fa-solid fa-play"></i> Jalan!
+                </button>
+                <button class="btn btn-reset" onclick="resetGame()">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+                <button class="btn btn-shuffle" onclick="shuffleLandmarks()">
+                    <i class="fa-solid fa-shuffle"></i> Acak Posisi
+                </button>
             </div>
 
-            <!-- Blockly Workspace Canvas -->
-            <div class="flex-1 bg-slate-900 rounded-2xl border border-slate-800 p-2.5 flex flex-col relative min-h-[380px]">
-                <div class="text-xs font-bold text-slate-400 mb-2 px-1 flex justify-between items-center">
-                    <span class="flex items-center gap-1.5 text-emerald-400"><i class="fa-solid fa-puzzle-piece text-amber-400"></i> Workspace Perintah Kode</span>
-                    <span class="text-[10px] text-slate-500 font-normal">Tarik blok ke kanan untuk menyusun logika</span>
-                </div>
-                <div id="blocklyDiv" class="w-full flex-1 rounded-xl overflow-hidden min-h-[350px]"></div>
-            </div>
-        </section>
+            <div id="blocklyDiv"></div>
 
-        <!-- RIGHT PANEL: Canvas Map Denah Kota -->
-        <section class="lg:w-1/2 flex flex-col items-center gap-3 order-1 lg:order-2">
-            
-            <div class="bg-slate-900 p-2 md:p-3 rounded-2xl border border-slate-800 shadow-2xl relative w-full flex flex-col items-center">
-                <div class="relative w-full aspect-square max-w-[560px] overflow-hidden rounded-xl bg-slate-950 border border-slate-800 shadow-2xl">
-                    <canvas id="cityCanvas" class="w-full h-full block"></canvas>
-                    
-                    <!-- Notification Banner -->
-                    <div id="statusBanner" class="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-2xl border border-slate-700 transition-all transform scale-0 duration-300 flex items-center gap-2 z-20 pointer-events-none whitespace-nowrap">
-                        <i id="statusIcon" class="fa-solid fa-info-circle text-emerald-400"></i>
-                        <span id="statusMessage">Game Siap!</span>
-                    </div>
-                </div>
-
-                <!-- Map Legend -->
-                <div class="w-full flex flex-wrap justify-between items-center text-[11px] text-slate-400 mt-2 px-2 gap-2">
-                    <span class="flex items-center gap-1.5"><span class="w-3 h-2 rounded-xs bg-slate-700 border border-amber-400 inline-block"></span> Jalan Aspal Single Vertikal</span>
-                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-400 inline-block border border-white"></span> Bus Si Yo</span>
-                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500 inline-block border border-white"></span> Target Misi</span>
+            <div class="instruction-card">
+                <i class="fa-solid fa-lightbulb"></i>
+                <div>
+                    <strong>Misi Saat Ini:</strong>
+                    <div id="missionDescription">Susun blok logika di atas lalu klik "Jalan!" untuk memandu Bus Si Yo.</div>
                 </div>
             </div>
+        </div>
 
-        </section>
+        <!-- RIGHT PANEL: CITY MAP CANVAS -->
+        <div class="right-panel">
+            <div class="map-wrapper">
+                <canvas id="cityCanvas" width="800" height="800"></canvas>
+            </div>
+        </div>
 
-    </main>
+    </div>
 
-    <!-- Blockly Toolbox XML -->
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast toast-info">
+        <i class="fa-solid fa-circle-info" id="toastIcon"></i>
+        <span id="toastMessage">Selamat Datang!</span>
+    </div>
+
+    <!-- BLOCKLY TOOLBOX XML CONFIG -->
     <xml id="toolbox" style="display: none">
-        <category name="Pergerakan Jalur" colour="#3b82f6">
+        <category name="Gerak" colour="#3b82f6">
             <block type="move_forward"></block>
             <block type="turn_left"></block>
             <block type="turn_right"></block>
-            <block type="move_direction"></block>
+            <block type="move_cardinal"></block>
         </category>
-        <category name="Pengulangan / Loop" colour="#10b981">
-            <block type="repeat_times">
-                <value name="TIMES">
-                    <shadow type="math_number">
-                        <field name="NUM">3</field>
-                    </shadow>
-                </value>
-            </block>
+        <category name="Pengulangan" colour="#10b981">
+            <block type="repeat_x_times"></block>
         </category>
     </xml>
 
     <script>
-        // Web Audio SFX using Tone.js
-        const SFX = {
-            step: () => {
-                try {
-                    const synth = new Tone.MembraneSynth({ volume: -14 }).toDestination();
-                    synth.triggerAttackRelease("C2", "16n");
-                } catch(e){}
-            },
-            turn: () => {
-                try {
-                    const synth = new Tone.Synth({ volume: -16 }).toDestination();
-                    synth.triggerAttackRelease("G4", "32n");
-                } catch(e){}
-            },
-            success: () => {
-                try {
-                    const synth = new Tone.PolySynth(Tone.Synth).toDestination();
-                    const now = Tone.now();
-                    synth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n", now);
-                } catch(e){}
-            },
-            fail: () => {
-                try {
-                    const synth = new Tone.Synth({ volume: -10 }).toDestination();
-                    synth.triggerAttackRelease("G2", "8n");
-                } catch(e){}
-            }
-        };
+        // GRID & CANVAS DIMENSIONS
+        const GRID_SIZE = 14; 
+        const CANVAS_SIZE = 800;
+        const CELL_SIZE = CANVAS_SIZE / GRID_SIZE; // ~57.14px
 
-        const GRID_SIZE = 12;
-
-        const DIR_VECTORS = [
-            { x: 0, y: -1 }, // North (0)
-            { x: 1, y: 0 },  // East (1)
-            { x: 0, y: 1 },  // South (2)
-            { x: -1, y: 0 }  // West (3)
+        // ROAD NETWORK DEFINITION (0=Building Parcel, 1=Road, 2=Roundabout)
+        const initialRoadGrid = [
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,1,2,1,0,0,0,0,0,0],
+            [1,1,1,1,1,2,2,2,1,1,1,1,1,1],
+            [0,0,0,0,0,1,2,1,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0]
         ];
 
-        // Available Building Slots on Grid (16 slots in total)
-        const BUILDING_SLOTS = [
-            { x: 1, y: 10 }, { x: 1, y: 8 }, { x: 3, y: 10 }, { x: 3, y: 8 }, // SW
-            { x: 8, y: 10 }, { x: 10, y: 10 }, { x: 8, y: 8 }, { x: 10, y: 8 }, // SE
-            { x: 1, y: 1 }, { x: 3, y: 1 }, { x: 1, y: 3 }, { x: 3, y: 3 },   // NW
-            { x: 8, y: 1 }, { x: 10, y: 1 }, { x: 10, y: 3 }, { x: 8, y: 3 }   // NE
-        ];
-
-        // 16 Detailed Landmarks mapped on grid
-        let LANDMARKS = [
-            { id: 'rumah_siyo', name: 'Rumah Si Yo', type: 'house', color: '#10b981', x: 1, y: 10 },
-            { id: 'stasiun_bus_kereta', name: 'Stasiun Kereta & Bus', type: 'station', color: '#0284c7', x: 1, y: 8 },
-            { id: 'sekolah', name: 'Sekolah Si Yo', type: 'school', color: '#f59e0b', x: 3, y: 10 },
-            { id: 'rumah_sakit', name: 'Rumah Sakit', type: 'hospital', color: '#ef4444', x: 8, y: 10 },
-            { id: 'apotek', name: 'Apotek', type: 'pharmacy', color: '#06b6d4', x: 10, y: 10 },
-            { id: 'kantor_polisi', name: 'Kantor Polisi', type: 'police', color: '#1e40af', x: 8, y: 8 },
-            { id: 'pemadam', name: 'Stasiun Damkar', type: 'firestation', color: '#dc2626', x: 10, y: 8 },
-            { id: 'pasar', name: 'Pasar Kota', type: 'market', color: '#d97706', x: 1, y: 1 },
-            { id: 'toko_buku', name: 'Toko Buku', type: 'bookstore', color: '#ec4899', x: 3, y: 1 },
-            { id: 'toko_kelontong', name: 'Toko Kelontong', type: 'grocery', color: '#84cc16', x: 1, y: 3 },
-            { id: 'kolam_renang', name: 'Kolam Renang', type: 'pool', color: '#0284c7', x: 8, y: 1 },
-            { id: 'stadion', name: 'Stadion Utama', type: 'stadium', color: '#16a34a', x: 10, y: 1 },
-            { id: 'gedung_teater', name: 'Gedung Teater', type: 'theater', color: '#9333ea', x: 10, y: 3 },
-            { id: 'hutan_kota', name: 'Hutan & Camping', type: 'park', color: '#15803d', x: 8, y: 3 },
-            { id: 'museum', name: 'Museum Sejarah', type: 'museum', color: '#b45309', x: 3, y: 3 },
-            { id: 'kantor_walikota', name: 'Kantor Walikota', type: 'cityhall', color: '#475569', x: 6, y: 4 }
-        ];
-
-        // Misi Permainan
-        const MISSIONS = [
-            {
-                id: 1,
-                title: "Misi 1: Berangkat ke Sekolah",
-                desc: "Si Yo ingin berangkat ke Sekolah dari Rumahnya! Susun jalur melangkah ke Sekolah.",
-                startLandmarkId: 'rumah_siyo',
-                targetLandmarkId: 'sekolah'
-            },
-            {
-                id: 2,
-                title: "Misi 2: Beli Obat di Apotek",
-                desc: "Jalan dari Rumah Sakit menuju Apotek untuk membeli obat.",
-                startLandmarkId: 'rumah_sakit',
-                targetLandmarkId: 'apotek'
-            },
-            {
-                id: 3,
-                title: "Misi 3: Wisata Edukasi ke Museum",
-                desc: "Berangkat dari Sekolah, lewati bundaran alun-alun menuju Museum Sejarah!",
-                startLandmarkId: 'sekolah',
-                targetLandmarkId: 'museum'
-            },
-            {
-                id: 4,
-                title: "Misi 4: Olahraga ke Kolam Renang",
-                desc: "Dari Pasar Tradisional, lintasi jalan utama ke Kolam Renang!",
-                startLandmarkId: 'pasar',
-                targetLandmarkId: 'kolam_renang'
-            },
-            {
-                id: 5,
-                title: "Misi 5: Berkemah di Hutan Kota",
-                desc: "Bantu Si Yo pergi dari Kantor Polisi menuju Hutan Kota & Camping Ground!",
-                startLandmarkId: 'kantor_polisi',
-                targetLandmarkId: 'hutan_kota'
-            },
-            {
-                id: 6,
-                title: "Misi 6: Pertemuan di Kantor Walikota",
-                desc: "Berangkat dari Stasiun Kereta, kendarai bus menuju Gedung Walikota!",
-                startLandmarkId: 'stasiun_bus_kereta',
-                targetLandmarkId: 'kantor_walikota'
-            }
-        ];
-
-        // SINGLE VERTICAL ROAD at x = 6. Central Horizontal at y = 5. Ring Road around outer blocks.
-        function isRoadCell(x, y) {
-            if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) return false;
-
-            // Single Central Vertical Avenue
-            const isSingleVerticalMain = (x === 6);
-            
-            // Peripheral Vertical Roads
-            const isSideVertical = (x === 2 || x === 9);
-
-            // Horizontal Avenues
-            const isHorizontalMain = (y === 1 || y === 5 || y === 9);
-
-            // Central Alun-Alun Roundabout Ring
-            const isRoundaboutRing = (x >= 5 && x <= 7 && y >= 4 && y <= 6);
-
-            return isSingleVerticalMain || isSideVertical || isHorizontalMain || isRoundaboutRing;
+        // Ensure 3 perpendicular cross roads dividing city into 4 blocks
+        for (let x = 0; x < 14; x++) {
+            initialRoadGrid[2][x] = 1;  // North Cross Road
+            initialRoadGrid[6][x] = 1;  // Middle Cross Road
+            initialRoadGrid[11][x] = 1; // South Cross Road
+            initialRoadGrid[x][6] = 1;  // Center Vertical Main Road
         }
+        // Roundabout center ring
+        initialRoadGrid[5][6] = 2; initialRoadGrid[7][6] = 2;
+        initialRoadGrid[6][5] = 2; initialRoadGrid[6][7] = 2;
 
-        // Get nearest road tile for starting/ending adjacent to a landmark
-        function getNearestRoadTile(landmarkX, landmarkY) {
-            const candidates = [
-                { x: landmarkX + 1, y: landmarkY },
-                { x: landmarkX - 1, y: landmarkY },
-                { x: landmarkX, y: landmarkY + 1 },
-                { x: landmarkX, y: landmarkY - 1 }
-            ];
-            for (let c of candidates) {
-                if (isRoadCell(c.x, c.y)) return c;
-            }
-            return { x: landmarkX, y: landmarkY };
-        }
+        // 16 LANDMARKS DEFINITIONS
+        const landmarkDefinitions = [
+            { id: 'siyo', name: 'Rumah Si Yo', size: [1,1], color: '#f59e0b', icon: 'fa-house-user', cat: 'res' },
+            { id: 'sekolah', name: 'Sekolah', size: [2,1], color: '#3b82f6', icon: 'fa-school', cat: 'edu' },
+            { id: 'stasiun', name: 'Stasiun Kereta & Bus', size: [2,2], color: '#6366f1', icon: 'fa-train-subway', cat: 'trans' },
+            { id: 'rs', name: 'Rumah Sakit', size: [2,2], color: '#ef4444', icon: 'fa-hospital', cat: 'health' },
+            { id: 'apotek', name: 'Apotek', size: [1,1], color: '#10b981', icon: 'fa-pills', cat: 'health' },
+            { id: 'pasar', name: 'Pasar Tradisional', size: [2,1], color: '#d97706', icon: 'fa-store', cat: 'comm' },
+            { id: 'kolam', name: 'Kolam Renang', size: [2,1], color: '#06b6d4', icon: 'fa-person-swimming', cat: 'sport' },
+            { id: 'stadion', name: 'Stadion Utama', size: [2,2], color: '#84cc16', icon: 'fa-futbol', cat: 'sport' },
+            { id: 'polisi', name: 'Kantor Polisi', size: [1,1], color: '#1e40af', icon: 'fa-building-shield', cat: 'gov' },
+            { id: 'tokobuku', name: 'Toko Buku', size: [1,1], color: '#8b5cf6', icon: 'fa-book-open', cat: 'comm' },
+            { id: 'museum', name: 'Museum Kota', size: [2,1], color: '#b45309', icon: 'fa-landmark', cat: 'cult' },
+            { id: 'teater', name: 'Gedung Teater', size: [2,1], color: '#ec4899', icon: 'fa-masks-theater', cat: 'cult' },
+            { id: 'hutan', name: 'Hutan Kota & Camping', size: [2,2], color: '#15803d', icon: 'fa-tree', cat: 'nature' },
+            { id: 'damkar', name: 'Pemadam Kebakaran', size: [2,1], color: '#dc2626', icon: 'fa-fire-extinguisher', cat: 'gov' },
+            { id: 'kelontong', name: 'Toko Kelontong', size: [1,1], color: '#059669', icon: 'fa-basket-shopping', cat: 'comm' },
+            { id: 'walikota', name: 'Kantor Walikota', size: [2,2], color: '#475569', icon: 'fa-building-columns', cat: 'gov' }
+        ];
 
-        // Blockly Custom Block Definitions
-        Blockly.Blocks['move_forward'] = {
-            init: function() {
-                this.appendDummyInput().appendField("Maju 1 Petak");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour("#3b82f6");
-                this.setTooltip("Mobil bergerak maju 1 petak sesuai arah hadap.");
-            }
-        };
+        // FIXED SLOTS (Non-overlapping with roads)
+        const availableSlots = [
+            // Blok Barat Laut (NW)
+            { x: 0, y: 0, w: 2, h: 2 }, { x: 3, y: 0, w: 2, h: 1 }, { x: 0, y: 3, w: 2, h: 2 }, { x: 3, y: 3, w: 2, h: 2 },
+            // Blok Timur Laut (NE)
+            { x: 8, y: 0, w: 2, h: 2 }, { x: 11, y: 0, w: 2, h: 2 }, { x: 8, y: 3, w: 2, h: 2 }, { x: 11, y: 3, w: 2, h: 2 },
+            // Blok Barat Daya (SW)
+            { x: 0, y: 7, w: 2, h: 2 }, { x: 3, y: 7, w: 2, h: 2 }, { x: 0, y: 12, w: 2, h: 1 }, { x: 3, y: 12, w: 2, h: 1 },
+            // Blok Timur Daya (SE)
+            { x: 8, y: 7, w: 2, h: 2 }, { x: 11, y: 7, w: 2, h: 2 }, { x: 8, y: 12, w: 2, h: 1 }, { x: 11, y: 12, w: 2, h: 1 }
+        ];
 
-        Blockly.Blocks['turn_left'] = {
-            init: function() {
-                this.appendDummyInput().appendField("Belok Kiri ↺");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour("#2563eb");
-                this.setTooltip("Memutar kendaraan 90 derajat ke kiri.");
-            }
-        };
+        let landmarks = [];
 
-        Blockly.Blocks['turn_right'] = {
-            init: function() {
-                this.appendDummyInput().appendField("Belok Kanan ↻");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour("#2563eb");
-                this.setTooltip("Memutar kendaraan 90 derajat ke kanan.");
-            }
-        };
+        // MISSIONS DEFINITION - ALL START FROM RUMAH SI YO
+        const missions = [
+            { id: 1, title: 'Misi 1: Rumah Si Yo -> Sekolah', start: 'siyo', target: 'sekolah', desc: 'Pandu Bus Si Yo dari Rumah Si Yo menuju Sekolah.' },
+            { id: 2, title: 'Misi 2: Rumah Si Yo -> Stasiun Kereta', start: 'siyo', target: 'stasiun', desc: 'Pandu Bus Si Yo menuju Stasiun Kereta & Bus.' },
+            { id: 3, title: 'Misi 3: Rumah Si Yo -> Rumah Sakit', start: 'siyo', target: 'rs', desc: 'Antar penumpang dari Rumah Si Yo ke Rumah Sakit.' },
+            { id: 4, title: 'Misi 4: Rumah Si Yo -> Apotek', start: 'siyo', target: 'apotek', desc: 'Pergi dari Rumah Si Yo menuju Apotek kota.' },
+            { id: 5, title: 'Misi 5: Rumah Si Yo -> Pasar Tradisional', start: 'siyo', target: 'pasar', desc: 'Pandu Bus Si Yo dari Rumah Si Yo menuju Pasar Tradisional.' },
+            { id: 6, title: 'Misi 6: Rumah Si Yo -> Toko Buku', start: 'siyo', target: 'tokobuku', desc: 'Antar Si Yo dari rumahnya menuju Toko Buku & Alat Tulis.' },
+            { id: 7, title: 'Misi 7: Rumah Si Yo -> Toko Kelontong', start: 'siyo', target: 'kelontong', desc: 'Pergi dari Rumah Si Yo menuju Toko Kelontong.' },
+            { id: 8, title: 'Misi 8: Rumah Si Yo -> Kantor Polisi', start: 'siyo', target: 'polisi', desc: 'Pandu Bus Si Yo menuju Kantor Polisi.' },
+            { id: 9, title: 'Misi 9: Rumah Si Yo -> Stasiun Damkar', start: 'siyo', target: 'damkar', desc: 'Pergi dari Rumah Si Yo menuju Stasiun Pemadam Kebakaran.' },
+            { id: 10, title: 'Misi 10: Rumah Si Yo -> Kolam Renang', start: 'siyo', target: 'kolam', desc: 'Antar Si Yo dari rumah menuju Kompleks Kolam Renang.' },
+            { id: 11, title: 'Misi 11: Rumah Si Yo -> Stadion Utama', start: 'siyo', target: 'stadion', desc: 'Pandu Bus Si Yo dari rumah menuju Stadion Utama.' },
+            { id: 12, title: 'Misi 12: Rumah Si Yo -> Hutan Kota', start: 'siyo', target: 'hutan', desc: 'Antar wisatawan dari Rumah Si Yo menuju Hutan Kota & Camping Ground.' },
+            { id: 13, title: 'Misi 13: Rumah Si Yo -> Gedung Teater', start: 'siyo', target: 'teater', desc: 'Pergi dari Rumah Si Yo menuju Gedung Teater seni.' },
+            { id: 14, title: 'Misi 14: Rumah Si Yo -> Museum Kota', start: 'siyo', target: 'museum', desc: 'Pandu perjalanan dari Rumah Si Yo menuju Museum Kota.' },
+            { id: 15, title: 'Misi 15: Rumah Si Yo -> Kantor Walikota', start: 'siyo', target: 'walikota', desc: 'Antar rombongan dari Rumah Si Yo ke Kantor Walikota.' },
+            { id: 16, title: 'Misi 16: Tur Utama -> Alun-Alun Pusat Kota', start: 'siyo', target: 'roundabout', desc: 'Jelajahi kota dari Rumah Si Yo menuju Bundaran Alun-Alun Pusat Kota.' }
+        ];
 
-        Blockly.Blocks['move_direction'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("Maju ke Arah")
-                    .appendField(new Blockly.FieldDropdown([
-                        ["Utara (▲)", "0"],
-                        ["Timur (►)", "1"],
-                        ["Selatan (▼)", "2"],
-                        ["Barat (◄)", "3"]
-                    ]), "DIR");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour("#0284c7");
-                this.setTooltip("Langsung melangkah ke arah kompas terpilih.");
-            }
-        };
-
-        Blockly.Blocks['repeat_times'] = {
-            init: function() {
-                this.appendValueInput("TIMES")
-                    .setCheck("Number")
-                    .appendField("Ulangi");
-                this.appendDummyInput().appendField("kali");
-                this.appendStatementInput("DO")
-                    .appendField("kerjakan");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour("#10b981");
-                this.setTooltip("Mengulang perintah di dalam blok.");
-            }
-        };
-
-        const CustomJS = new Blockly.Generator('JS');
-        CustomJS.PRECEDENCE = 0;
-
-        CustomJS.scrub_ = function(block, code, thisOnly) {
-            const nextBlock = block.nextConnection && block.nextConnection.targetBlock();
-            if (nextBlock && !thisOnly) {
-                return code + CustomJS.blockToCode(nextBlock);
-            }
-            return code;
-        };
-
-        CustomJS['move_forward'] = function(block) {
-            return 'actions.push({type: "MOVE_FORWARD"});\n';
-        };
-
-        CustomJS['turn_left'] = function(block) {
-            return 'actions.push({type: "TURN_LEFT"});\n';
-        };
-
-        CustomJS['turn_right'] = function(block) {
-            return 'actions.push({type: "TURN_RIGHT"});\n';
-        };
-
-        CustomJS['move_direction'] = function(block) {
-            const dir = block.getFieldValue('DIR');
-            return `actions.push({type: "MOVE_DIR", dir: ${dir}});\n`;
-        };
-
-        CustomJS['repeat_times'] = function(block) {
-            const repeats = CustomJS.valueToCode(block, 'TIMES', CustomJS.PRECEDENCE) || '1';
-            const branch = CustomJS.statementToCode(block, 'DO');
-            return `for (let i = 0; i < ${repeats}; i++) {\n${branch}}\n`;
-        };
-
-        CustomJS['math_number'] = function(block) {
-            const code = String(block.getFieldValue('NUM'));
-            return [code, CustomJS.PRECEDENCE];
-        };
-
-        let workspace = null;
         let currentMissionIndex = 0;
-        let player = { x: 2, y: 9, dir: 0 };
-        let currentTargetPos = { x: 3, y: 9 };
+        let playerState = { x: 0, y: 0, dir: 0 }; // dir: 0=East, 1=South, 2=West, 3=North
         let isExecuting = false;
-        let executionSpeed = 300;
+        let blocklyWorkspace = null;
 
-        const canvas = document.getElementById('cityCanvas');
-        const ctx = canvas.getContext('2d');
+        // TONE.JS AUDIO SYNTHESIZER
+        const synth = new Tone.Synth().toDestination();
 
-        window.addEventListener('DOMContentLoaded', () => {
-            initBlockly();
-            initLevelDropdown();
-            setupEventListeners();
-            
-            resizeCanvas();
-            loadMission(0);
-
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-                renderMap();
-            });
-        });
-
-        function resizeCanvas() {
-            const parent = canvas.parentElement;
-            const displayWidth = parent.clientWidth || 540;
-            const dpr = window.devicePixelRatio || 1;
-
-            canvas.width = displayWidth * dpr;
-            canvas.height = displayWidth * dpr;
-
-            ctx.resetTransform();
-            ctx.scale(dpr, dpr);
+        function playSound(type) {
+            try {
+                if (Tone.context.state !== 'running') Tone.start();
+                if (type === 'step') {
+                    synth.triggerAttackRelease("C5", "8n");
+                } else if (type === 'turn') {
+                    synth.triggerAttackRelease("E5", "8n");
+                } else if (type === 'win') {
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("G4", "8n", now);
+                    synth.triggerAttackRelease("C5", "8n", now + 0.15);
+                    synth.triggerAttackRelease("E5", "8n", now + 0.3);
+                    synth.triggerAttackRelease("G5", "4n", now + 0.45);
+                } else if (type === 'fail') {
+                    synth.triggerAttackRelease("A3", "4n");
+                }
+            } catch(e) {}
         }
 
+        // INITIALIZE APP
+        window.onload = function() {
+            initBlockly();
+            populateMissionDropdown();
+            layoutLandmarks();
+            resetPlayerToMissionStart();
+            renderMap();
+        };
+
+        // POPULATE MISSION DROPDOWN
+        function populateMissionDropdown() {
+            const select = document.getElementById('missionSelect');
+            select.innerHTML = '';
+            missions.forEach((m, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = m.title;
+                select.appendChild(opt);
+            });
+        }
+
+        // LAYOUT LANDMARKS INTO PARCELS
+        function layoutLandmarks() {
+            landmarks = [];
+            let slotsCopy = [...availableSlots];
+
+            // Shuffle slots array
+            for (let i = slotsCopy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [slotsCopy[i], slotsCopy[j]] = [slotsCopy[j], slotsCopy[i]];
+            }
+
+            landmarkDefinitions.forEach((def, idx) => {
+                const slot = slotsCopy[idx % slotsCopy.length];
+                landmarks.push({
+                    ...def,
+                    x: slot.x,
+                    y: slot.y
+                });
+            });
+        }
+
+        function shuffleLandmarks() {
+            if (isExecuting) return;
+            layoutLandmarks();
+            resetPlayerToMissionStart();
+            renderMap();
+            showToast("Posisi landmark di kota berhasil diacak!", "info");
+        }
+
+        // BLOCKLY CUSTOM BLOCKS
         function initBlockly() {
-            workspace = Blockly.inject('blocklyDiv', {
+            Blockly.Blocks['move_forward'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("Maju 1 Langkah");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(210);
+                    this.setTooltip("Maju satu petak ke depan");
+                }
+            };
+
+            Blockly.Blocks['turn_left'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("Belok Kiri ↺");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(210);
+                    this.setTooltip("Putar arah ke kiri");
+                }
+            };
+
+            Blockly.Blocks['turn_right'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("Belok Kanan ↻");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(210);
+                    this.setTooltip("Putar arah ke kanan");
+                }
+            };
+
+            Blockly.Blocks['move_cardinal'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("Maju ke")
+                        .appendField(new Blockly.FieldDropdown([
+                            ["Utara ↑", "NORTH"],
+                            ["Timur →", "EAST"],
+                            ["Selatan ↓", "SOUTH"],
+                            ["Barat ←", "WEST"]
+                        ]), "DIR");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(210);
+                }
+            };
+
+            Blockly.Blocks['repeat_x_times'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("Ulangi")
+                        .appendField(new Blockly.FieldFieldNumber(2, 1, 10), "TIMES")
+                        .appendField("kali");
+                    this.appendStatementInput("DO").appendField("kerjakan");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(120);
+                }
+            };
+
+            blocklyWorkspace = Blockly.inject('blocklyDiv', {
                 toolbox: document.getElementById('toolbox'),
                 scrollbars: true,
                 trashcan: true,
-                zoom: {
-                    controls: true,
-                    wheel: true,
-                    startScale: 0.9,
-                    maxScale: 1.4,
-                    minScale: 0.6
-                },
-                grid: {
-                    spacing: 20,
-                    length: 3,
-                    colour: '#334155',
-                    snap: true
-                }
+                zoom: { controls: true, wheel: true, startScale: 0.9 }
             });
         }
 
-        function initLevelDropdown() {
-            const levelSelect = document.getElementById('levelSelect');
-            levelSelect.innerHTML = '';
-            MISSIONS.forEach((m, idx) => {
-                const opt = document.createElement('option');
-                opt.value = idx;
-                opt.textContent = `Misi ${m.id}: ${m.title.split(':')[1].trim()}`;
-                levelSelect.appendChild(opt);
-            });
+        // RESET PLAYER TO MISSION START ROAD
+        function resetPlayerToMissionStart() {
+            const mission = missions[currentMissionIndex];
+            document.getElementById('missionDescription').innerText = mission.desc;
 
-            levelSelect.addEventListener('change', (e) => {
-                loadMission(parseInt(e.target.value));
-            });
-        }
-
-        function setupEventListeners() {
-            document.getElementById('btnRun').addEventListener('click', runCode);
-            document.getElementById('btnReset').addEventListener('click', () => {
-                loadMission(currentMissionIndex);
-                showStatus("Posisi Si Yo direset.", "fa-rotate-right", "bg-slate-800");
-            });
-
-            document.getElementById('btnShuffle').addEventListener('click', shuffleLandmarkPositions);
-
-            const speedSlow = document.getElementById('speedSlow');
-            const speedFast = document.getElementById('speedFast');
-
-            speedSlow.addEventListener('click', () => {
-                executionSpeed = 500;
-                speedSlow.className = "px-2 py-0.5 rounded-lg bg-emerald-500 text-slate-950 font-bold text-[10px]";
-                speedFast.className = "px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-semibold text-[10px] hover:bg-slate-700";
-            });
-
-            speedFast.addEventListener('click', () => {
-                executionSpeed = 220;
-                speedFast.className = "px-2 py-0.5 rounded-lg bg-emerald-500 text-slate-950 font-bold text-[10px]";
-                speedSlow.className = "px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-semibold text-[10px] hover:bg-slate-700";
-            });
-        }
-
-        // Shuffle building positions across slots
-        function shuffleLandmarkPositions() {
-            if (isExecuting) return;
-
-            // Fisher-Yates shuffle slots
-            const shuffledSlots = [...BUILDING_SLOTS];
-            for (let i = shuffledSlots.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffledSlots[i], shuffledSlots[j]] = [shuffledSlots[j], shuffledSlots[i]];
+            const startLandmark = landmarks.find(l => l.id === mission.start);
+            if (startLandmark) {
+                // Find nearest road adjacent to start landmark
+                const roadAdjacent = findAdjacentRoad(startLandmark.x, startLandmark.y, startLandmark.size[0], startLandmark.size[1]);
+                playerState.x = roadAdjacent.x;
+                playerState.y = roadAdjacent.y;
+                playerState.dir = roadAdjacent.dir;
+            } else {
+                playerState.x = 0; playerState.y = 2; playerState.dir = 0;
             }
-
-            // Assign new coordinates to landmarks
-            LANDMARKS.forEach((lm, index) => {
-                lm.x = shuffledSlots[index].x;
-                lm.y = shuffledSlots[index].y;
-            });
-
-            showStatus("Posisi 16 landmark berhasil diacak!", "fa-shuffle", "bg-amber-600");
-            loadMission(currentMissionIndex);
         }
 
-        function loadMission(index) {
-            currentMissionIndex = index;
-            const mission = MISSIONS[index];
+        function findAdjacentRoad(lx, ly, lw, lh) {
+            // Check around building perimeter for a road cell
+            for (let x = lx; x < lx + lw; x++) {
+                if (ly - 1 >= 0 && initialRoadGrid[ly - 1][x] >= 1) return { x: x, y: ly - 1, dir: 1 };
+                if (ly + lh < GRID_SIZE && initialRoadGrid[ly + lh][x] >= 1) return { x: x, y: ly + lh, dir: 3 };
+            }
+            for (let y = ly; y < ly + lh; y++) {
+                if (lx - 1 >= 0 && initialRoadGrid[y][lx - 1] >= 1) return { x: lx - 1, y: y, dir: 0 };
+                if (lx + lw < GRID_SIZE && initialRoadGrid[y][lx + lw] >= 1) return { x: lx + lw, y: y, dir: 2 };
+            }
+            return { x: 6, y: 2, dir: 1 };
+        }
+
+        function changeMission() {
+            currentMissionIndex = parseInt(document.getElementById('missionSelect').value);
+            resetGame();
+        }
+
+        function resetGame() {
             isExecuting = false;
-
-            // Find start & target landmark objects
-            const startLm = LANDMARKS.find(l => l.id === mission.startLandmarkId);
-            const targetLm = LANDMARKS.find(l => l.id === mission.targetLandmarkId);
-
-            // Compute road tile positions
-            const startRoad = getNearestRoadTile(startLm.x, startLm.y);
-            const targetRoad = getNearestRoadTile(targetLm.x, targetLm.y);
-
-            player = { x: startRoad.x, y: startRoad.y, dir: 0 };
-            currentTargetPos = { x: targetRoad.x, y: targetRoad.y };
-
-            document.getElementById('missionTitle').textContent = mission.title;
-            document.getElementById('missionDesc').textContent = mission.desc;
-            document.getElementById('levelSelect').value = index;
-
-            workspace.clear();
-            const startBlock = workspace.newBlock('move_forward');
-            startBlock.initSvg();
-            startBlock.render();
-
+            resetPlayerToMissionStart();
             renderMap();
         }
 
+        // MAP CANVAS RENDERER
         function renderMap() {
-            const displaySize = canvas.clientWidth || 540;
-            const cellSize = displaySize / GRID_SIZE;
+            const canvas = document.getElementById('cityCanvas');
+            const ctx = canvas.getContext('2d');
 
-            ctx.clearRect(0, 0, displaySize, displaySize);
+            // 1. CLEAR & GRASS BASE
+            ctx.fillStyle = '#2e7d32'; // Lush grass green
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-            // 1. Grass Ground Surface
-            ctx.fillStyle = '#1e3a29';
-            ctx.fillRect(0, 0, displaySize, displaySize);
+            // Subtle grass texture pattern
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+            for (let i = 0; i < CANVAS_SIZE; i += 16) {
+                for (let j = 0; j < CANVAS_SIZE; j += 16) {
+                    if ((i + j) % 32 === 0) ctx.fillRect(i, j, 16, 16);
+                }
+            }
 
-            // 2. Draw District Grass Grounds
-            drawDistricts(displaySize, cellSize);
+            // 2. DRAW ROADS (SEAMLESS CHARCOAL ASPHALT + SOLID WHITE EDGE LINES)
+            ctx.fillStyle = '#262626'; // Charcoal asphalt road
 
-            // 3. Draw Sidewalks & Roads (Single Vertical Middle Road)
-            drawRoadNetwork(displaySize, cellSize);
-
-            // 4. Draw Center Alun-Alun Roundabout
-            drawRoundabout(cellSize);
-
-            // 5. Render 16 Detailed Top-Down Vector Landmarks
-            LANDMARKS.forEach(lm => drawLandmarkDetail(lm, cellSize));
-
-            // 6. Draw Target Destination Marker
-            drawTargetMarker(cellSize);
-
-            // 7. Draw Player Character (Si Yo Bus Tour)
-            drawPlayerVehicle(cellSize);
-        }
-
-        function drawDistricts(displaySize, cellSize) {
-            // Background grass patches & tree clusters
-            ctx.fillStyle = '#224e34';
-            ctx.fillRect(2, 2, displaySize - 4, displaySize - 4);
-
-            // Render realistic top-down trees in grass spaces
-            drawTreesCluster(cellSize * 0.5, cellSize * 0.5, cellSize * 0.18, 3);
-            drawTreesCluster(cellSize * 11.2, cellSize * 0.5, cellSize * 0.18, 4);
-            drawTreesCluster(cellSize * 0.5, cellSize * 11.2, cellSize * 0.18, 3);
-            drawTreesCluster(cellSize * 11.2, cellSize * 11.2, cellSize * 0.18, 4);
-        }
-
-        function drawRoadNetwork(displaySize, cellSize) {
-            // Sidewalk Layer
-            ctx.fillStyle = '#cbd5e1';
+            // Fill all road tiles
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
-                    if (isRoadCell(c, r)) {
-                        ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+                    if (initialRoadGrid[r][c] >= 1) {
+                        ctx.fillRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
                     }
                 }
             }
 
-            // Dark Asphalt Layer
-            ctx.fillStyle = '#272e3f';
-            const sPad = cellSize * 0.08;
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    if (isRoadCell(c, r)) {
-                        ctx.fillRect(c * cellSize + sPad, r * cellSize + sPad, cellSize - sPad * 2, cellSize - sPad * 2);
-                    }
-                }
-            }
-
-            // Yellow Dashed Lane Markings
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    if (isRoadCell(c, r)) {
-                        const cx = c * cellSize + cellSize / 2;
-                        const cy = r * cellSize + cellSize / 2;
-
-                        ctx.strokeStyle = '#f59e0b';
-                        ctx.lineWidth = 1.5;
-                        ctx.setLineDash([4, 4]);
-
-                        if (isRoadCell(c, r - 1) && isRoadCell(c, r + 1)) {
-                            ctx.beginPath();
-                            ctx.moveTo(cx, r * cellSize);
-                            ctx.lineTo(cx, (r + 1) * cellSize);
-                            ctx.stroke();
-                        }
-                        if (isRoadCell(c - 1, r) && isRoadCell(c + 1, r)) {
-                            ctx.beginPath();
-                            ctx.moveTo(c * cellSize, cy);
-                            ctx.lineTo((c + 1) * cellSize, cy);
-                            ctx.stroke();
-                        }
-                        ctx.setLineDash([]);
-
-                        if (isIntersection(c, r)) {
-                            drawZebraCross(c, r, cellSize);
-                        }
-                    }
-                }
-            }
-        }
-
-        function isIntersection(c, r) {
-            let conn = 0;
-            if (isRoadCell(c+1, r)) conn++;
-            if (isRoadCell(c-1, r)) conn++;
-            if (isRoadCell(c, r+1)) conn++;
-            if (isRoadCell(c, r-1)) conn++;
-            return conn >= 3;
-        }
-
-        function drawZebraCross(c, r, cellSize) {
-            ctx.fillStyle = '#ffffff';
-            const numStripes = 4;
-            const stripeW = cellSize / (numStripes * 2);
-            for (let i = 0; i < numStripes; i++) {
-                ctx.fillRect(c * cellSize + (i * 2 + 0.5) * stripeW, r * cellSize + 2, stripeW, cellSize * 0.16);
-                ctx.fillRect(c * cellSize + (i * 2 + 0.5) * stripeW, (r + 1) * cellSize - cellSize * 0.18, stripeW, cellSize * 0.16);
-            }
-        }
-
-        function drawRoundabout(cellSize) {
-            const rx = 6.5 * cellSize;
-            const ry = 5.5 * cellSize;
-            const radius = cellSize * 0.9;
-
-            // Park Plaza Circle
-            ctx.fillStyle = '#15803d';
-            ctx.beginPath();
-            ctx.arc(rx, ry, radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.strokeStyle = '#fef08a';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Fountain
-            ctx.fillStyle = '#0284c7';
-            ctx.beginPath();
-            ctx.arc(rx, ry, radius * 0.45, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
-        }
-
-        function drawLandmarkDetail(lm, cellSize) {
-            const lx = lm.x * cellSize;
-            const ly = lm.y * cellSize;
-            const size = cellSize;
-
-            // Building Shadow
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-            ctx.fillRect(lx + 3, ly + 3, size - 2, size - 2);
-
-            // Vector Architectural Graphics
-            switch (lm.type) {
-                case 'house':
-                    ctx.fillStyle = '#059669';
-                    ctx.fillRect(lx + 2, ly + 2, size - 4, size - 4);
-                    ctx.fillStyle = '#dc2626';
-                    ctx.beginPath();
-                    ctx.moveTo(lx + size / 2, ly + 4);
-                    ctx.lineTo(lx + size - 5, ly + size / 2);
-                    ctx.lineTo(lx + 5, ly + size / 2);
-                    ctx.fill();
-                    break;
-
-                case 'school':
-                    ctx.fillStyle = '#d97706';
-                    ctx.fillRect(lx + 2, ly + 2, size - 4, size - 4);
-                    ctx.fillStyle = '#b45309';
-                    ctx.fillRect(lx + 5, ly + 5, size - 10, size - 10);
-                    // Flagpole
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(lx + size / 2 - 1, ly + size / 2 - 2, 2, 8);
-                    ctx.fillStyle = '#ef4444';
-                    ctx.fillRect(lx + size / 2 + 1, ly + size / 2 - 2, 4, 3);
-                    break;
-
-                case 'stadium':
-                    ctx.fillStyle = '#334155';
-                    ctx.fillRect(lx + 2, ly + 2, size - 4, size - 4);
-                    ctx.fillStyle = '#16a34a';
-                    ctx.fillRect(lx + 5, ly + 6, size - 10, size - 12);
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(lx + 7, ly + 8, size - 14, size - 16);
-                    break;
-
-                case 'pool':
-                    ctx.fillStyle = '#94a3b8';
-                    ctx.fillRect(lx + 2, ly + 2, size - 4, size - 4);
-                    ctx.fillStyle = '#0284c7';
-                    ctx.fillRect(lx + 5, ly + 5, size - 10, size - 10);
-                    break;
-
-                case 'hospital':
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(lx + 2, ly + 2, size - 4, size - 4);
-                    ctx.fillStyle = '#ef4444';
-                    ctx.fillRect(lx + size / 2 - 2.5, ly + 6, 5, size - 12);
-                    ctx.fillRect(lx + 6, ly + size / 2 - 2.5, size - 12, 5);
-                    break;
-
-                case 'station':
-                    ctx.fillStyle = '#0284c7';
-                    ctx.fillRect(lx + 2, ly + 2, size - 4, size - 4);
-                    ctx.strokeStyle = '#64748b';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(lx + 4, ly + size - 6);
-                    ctx.lineTo(lx + size - 4, ly + size - 6);
-                    ctx.stroke();
-                    break;
-
-                case 'park':
-                    ctx.fillStyle = '#14532d';
-                    ctx.fillRect(lx + 2, ly + 2, size - 4, size - 4);
-                    ctx.fillStyle = '#f97316';
-                    ctx.beginPath();
-                    ctx.moveTo(lx + 8, ly + 8);
-                    ctx.lineTo(lx + 14, ly + 16);
-                    ctx.lineTo(lx + 2, ly + 16);
-                    ctx.fill();
-                    break;
-
-                default:
-                    ctx.fillStyle = lm.color;
-                    ctx.fillRect(lx + 2, ly + 2, size - 4, size - 4);
-                    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-                    ctx.fillRect(lx + 4, ly + 4, size - 8, size - 8);
-                    break;
-            }
-
-            // Visible Text Name Label on Top of Landmark
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-            ctx.fillRect(lx + 1, ly + size - 12, size - 2, 11);
-
-            ctx.fillStyle = '#f8fafc';
-            ctx.font = 'bold 7.5px Inter, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(lm.name, lx + size / 2, ly + size - 4);
-        }
-
-        function drawTreesCluster(x, y, radius, count) {
-            ctx.fillStyle = '#15803d';
-            for (let i = 0; i < count; i++) {
-                const tx = x + (i % 2) * radius * 1.4;
-                const ty = y + Math.floor(i / 2) * radius * 1.4;
-                ctx.beginPath();
-                ctx.arc(tx, ty, radius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function drawTargetMarker(cellSize) {
-            const tx = currentTargetPos.x * cellSize + cellSize / 2;
-            const ty = currentTargetPos.y * cellSize + cellSize / 2;
-
-            ctx.fillStyle = 'rgba(244, 63, 94, 0.35)';
-            ctx.beginPath();
-            ctx.arc(tx, ty, cellSize * 0.65, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#f43f5e';
-            ctx.beginPath();
-            ctx.arc(tx, ty, cellSize * 0.28, 0, Math.PI * 2);
-            ctx.fill();
+            // Draw Solid White Road Edges (Outer boundaries between road & non-road)
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (initialRoadGrid[r][c] >= 1) {
+                        const x = c * CELL_SIZE;
+                        const y = r * CELL_SIZE;
+
+                        // Top border
+                        if (r === 0 || initialRoadGrid[r - 1][c] === 0) {
+                            ctx.moveTo(x, y); ctx.lineTo(x + CELL_SIZE, y);
+                        }
+                        // Bottom border
+                        if (r === GRID_SIZE - 1 || initialRoadGrid[r + 1][c] === 0) {
+                            ctx.moveTo(x, y + CELL_SIZE); ctx.lineTo(x + CELL_SIZE, y + CELL_SIZE);
+                        }
+                        // Left border
+                        if (c === 0 || initialRoadGrid[r][c - 1] === 0) {
+                            ctx.moveTo(x, y); ctx.lineTo(x, y + CELL_SIZE);
+                        }
+                        // Right border
+                        if (c === GRID_SIZE - 1 || initialRoadGrid[r][c + 1] === 0) {
+                            ctx.moveTo(x + CELL_SIZE, y); ctx.lineTo(x + CELL_SIZE, y + CELL_SIZE);
+                        }
+                    }
+                }
+            }
             ctx.stroke();
 
+            // 3. DRAW ROUNDABOUT ALUN-ALUN PUSAT KOTA
+            const cx = 6.5 * CELL_SIZE;
+            const cy = 6.5 * CELL_SIZE;
+            ctx.fillStyle = '#15803d';
+            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 1.1, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.stroke();
+
+            // Roundabout Fountain
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 0.5, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 9px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('🏁', tx, ty + 3);
+            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 0.2, 0, Math.PI * 2); ctx.fill();
+
+            // 4. DRAW LANDMARKS / BUILDINGS
+            landmarks.forEach(lm => {
+                drawLandmarkBuilding(ctx, lm);
+            });
+
+            // Highlight Target Landmark for current mission
+            const currentMission = missions[currentMissionIndex];
+            if (currentMission.target !== 'roundabout') {
+                const targetLm = landmarks.find(l => l.id === currentMission.target);
+                if (targetLm) {
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 4;
+                    ctx.setLineDash([8, 6]);
+                    ctx.strokeRect(targetLm.x * CELL_SIZE - 2, targetLm.y * CELL_SIZE - 2, targetLm.size[0] * CELL_SIZE + 4, targetLm.size[1] * CELL_SIZE + 4);
+                    ctx.setLineDash([]);
+                }
+            }
+
+            // 5. DRAW OVERLAY STRIMIN GRID LINES (FINELY DASHED GUIDELINES ACROSS WHOLE MAP)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            for (let i = 0; i <= GRID_SIZE; i++) {
+                // Vertical lines
+                ctx.beginPath();
+                ctx.moveTo(i * CELL_SIZE, 0);
+                ctx.lineTo(i * CELL_SIZE, CANVAS_SIZE);
+                ctx.stroke();
+                // Horizontal lines
+                ctx.beginPath();
+                ctx.moveTo(0, i * CELL_SIZE);
+                ctx.lineTo(CANVAS_SIZE, i * CELL_SIZE);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]); // Reset dash
+
+            // 6. DRAW PLAYER CHARACTER (BUS SI YO)
+            drawPlayerBus(ctx);
         }
 
-        function drawPlayerVehicle(cellSize) {
-            const px = player.x * cellSize + cellSize / 2;
-            const py = player.y * cellSize + cellSize / 2;
+        // DETAILED REALISTIC LANDMARK DRAWING
+        function drawLandmarkBuilding(ctx, lm) {
+            const x = lm.x * CELL_SIZE + 4;
+            const y = lm.y * CELL_SIZE + 4;
+            const w = lm.size[0] * CELL_SIZE - 8;
+            const h = lm.size[1] * CELL_SIZE - 8;
+
+            // Soft Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            ctx.fillRect(x + 4, y + 4, w, h);
+
+            // Base Building Box
+            ctx.fillStyle = lm.color;
+            ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 2; ctx.stroke();
+
+            // Custom Roof Architecture Details
+            if (lm.id === 'stadion') {
+                // Soccer Field Inner
+                ctx.fillStyle = '#4ade80';
+                ctx.fillRect(x + 12, y + 12, w - 24, h - 24);
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+                ctx.strokeRect(x + 12, y + 12, w - 24, h - 24);
+                ctx.beginPath(); ctx.arc(x + w/2, y + h/2, 10, 0, Math.PI * 2); ctx.stroke();
+            } else if (lm.id === 'rs') {
+                // Helipad
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath(); ctx.arc(x + w/2, y + h/2, 16, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = '#dc2626'; ctx.font = 'bold 16px Nunito'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('H', x + w/2, y + h/2);
+            } else if (lm.id === 'stasiun') {
+                // Railway tracks
+                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(x, y + 15); ctx.lineTo(x + w, y + 15); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x, y + 25); ctx.lineTo(x + w, y + 25); ctx.stroke();
+            } else if (lm.id === 'kolam') {
+                // Swimming pool water
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(x + 8, y + 8, w - 16, h - 16);
+            } else if (lm.id === 'hutan') {
+                // Trees and Campfire
+                ctx.fillStyle = '#166534';
+                ctx.beginPath(); ctx.arc(x + 20, y + 20, 14, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + w - 20, y + 20, 14, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + 20, y + h - 20, 14, 0, Math.PI*2); ctx.fill();
+                // Tents
+                ctx.fillStyle = '#f97316';
+                ctx.beginPath(); ctx.moveTo(x + w/2, y + h/2 - 10); ctx.lineTo(x + w/2 - 10, y + h/2 + 8); ctx.lineTo(x + w/2 + 10, y + h/2 + 8); ctx.fill();
+            }
+
+            // Landmark Text Badge directly on map
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.beginPath(); ctx.roundRect(x + 4, y + h - 22, w - 8, 18, 4); ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px Nunito';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(lm.name, x + w / 2, y + h - 13);
+        }
+
+        // DRAW PLAYER BUS VEHICLE
+        function drawPlayerBus(ctx) {
+            const px = playerState.x * CELL_SIZE + CELL_SIZE / 2;
+            const py = playerState.y * CELL_SIZE + CELL_SIZE / 2;
 
             ctx.save();
             ctx.translate(px, py);
+            ctx.rotate(playerState.dir * Math.PI / 2);
 
-            const angles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
-            ctx.rotate(angles[player.dir]);
+            // Bus Body
+            ctx.fillStyle = '#f59e0b'; // Amber yellow
+            ctx.beginPath(); ctx.roundRect(-18, -12, 36, 24, 6); ctx.fill();
+            ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2; ctx.stroke();
 
-            const busW = cellSize * 0.42;
-            const busH = cellSize * 0.72;
+            // Windshield Front
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(8, -9, 7, 18);
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-            ctx.fillRect(-busW / 2 + 2, -busH / 2 + 3, busW, busH);
+            // Roof
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(-12, -8, 18, 16);
 
-            ctx.fillStyle = '#f59e0b';
-            ctx.beginPath();
-            if (ctx.roundRect) {
-                ctx.roundRect(-busW / 2, -busH / 2, busW, busH, 5);
-            } else {
-                ctx.rect(-busW / 2, -busH / 2, busW, busH);
-            }
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1.2;
-            ctx.stroke();
-
-            ctx.fillStyle = '#0284c7';
-            ctx.fillRect(-busW / 2 + 2, -busH / 2 + 3, busW - 4, 5);
+            // Headlights
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(16, -10, 3, 4);
+            ctx.fillRect(16, 6, 3, 4);
 
             ctx.restore();
         }
 
-        function runCode() {
+        // EXECUTE BLOCKLY CODE
+        async function runCode() {
             if (isExecuting) return;
-
-            const actions = [];
-            try {
-                const code = CustomJS.workspaceToCode(workspace);
-                eval(code);
-            } catch (e) {
-                console.error(e);
-                showStatus("Gagal membaca blok kode!", "fa-triangle-exclamation", "bg-rose-600");
-                return;
-            }
-
-            if (actions.length === 0) {
-                showStatus("Tarik blok perintah terlebih dahulu!", "fa-lightbulb", "bg-amber-600");
-                return;
-            }
-
             isExecuting = true;
-            document.getElementById('btnRun').disabled = true;
-            showStatus("Si Yo sedang meluncur...", "fa-bus-simple", "bg-emerald-600");
 
-            const mission = MISSIONS[currentMissionIndex];
-            const startLm = LANDMARKS.find(l => l.id === mission.startLandmarkId);
-            const startRoad = getNearestRoadTile(startLm.x, startLm.y);
+            const topBlocks = blocklyWorkspace.getTopBlocks(true);
+            if (topBlocks.length === 0) {
+                showToast("Tambahkan blok perintah terlebih dahulu!", "error");
+                isExecuting = false;
+                return;
+            }
 
-            player = { x: startRoad.x, y: startRoad.y, dir: 0 };
-            renderMap();
+            const commandQueue = [];
+            
+            function parseBlock(block) {
+                if (!block) return;
+                const type = block.type;
 
-            let stepIndex = 0;
+                if (type === 'move_forward') {
+                    commandQueue.push({ type: 'FORWARD' });
+                } else if (type === 'turn_left') {
+                    commandQueue.push({ type: 'TURN_LEFT' });
+                } else if (type === 'turn_right') {
+                    commandQueue.push({ type: 'TURN_RIGHT' });
+                } else if (type === 'move_cardinal') {
+                    const dir = block.getFieldValue('DIR');
+                    commandQueue.push({ type: 'CARDINAL', dir: dir });
+                } else if (type === 'repeat_x_times') {
+                    const times = parseInt(block.getFieldValue('TIMES')) || 1;
+                    const doBlock = block.getInputTargetBlock('DO');
+                    for (let i = 0; i < times; i++) {
+                        let current = doBlock;
+                        while (current) {
+                            parseBlock(current);
+                            current = current.getNextBlock();
+                        }
+                    }
+                }
+            }
 
-            function processNextStep() {
-                if (stepIndex >= actions.length) {
-                    checkMissionCompletion();
-                    isExecuting = false;
-                    document.getElementById('btnRun').disabled = false;
+            topBlocks.forEach(b => {
+                let curr = b;
+                while (curr) {
+                    parseBlock(curr);
+                    curr = curr.getNextBlock();
+                }
+            });
+
+            // Execute commands step-by-step
+            for (let cmd of commandQueue) {
+                if (!isExecuting) break;
+                await executeCommand(cmd);
+                renderMap();
+                await new Promise(r => setTimeout(r, 400));
+            }
+
+            checkMissionCompletion();
+            isExecuting = false;
+        }
+
+        async function executeCommand(cmd) {
+            if (cmd.type === 'FORWARD') {
+                let dx = 0, dy = 0;
+                if (playerState.dir === 0) dx = 1;
+                else if (playerState.dir === 1) dy = 1;
+                else if (playerState.dir === 2) dx = -1;
+                else if (playerState.dir === 3) dy = -1;
+
+                const nx = playerState.x + dx;
+                const ny = playerState.y + dy;
+
+                if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && initialRoadGrid[ny][nx] >= 1) {
+                    playerState.x = nx;
+                    playerState.y = ny;
+                    playSound('step');
+                } else {
+                    playSound('fail');
+                    showToast("Ups! Karakter menabrak trotoar/bangunan!", "error");
+                }
+            } else if (cmd.type === 'TURN_LEFT') {
+                playerState.dir = (playerState.dir + 3) % 4;
+                playSound('turn');
+            } else if (cmd.type === 'TURN_RIGHT') {
+                playerState.dir = (playerState.dir + 1) % 4;
+                playSound('turn');
+            } else if (cmd.type === 'CARDINAL') {
+                let targetDir = 0;
+                if (cmd.dir === 'EAST') targetDir = 0;
+                else if (cmd.dir === 'SOUTH') targetDir = 1;
+                else if (cmd.dir === 'WEST') targetDir = 2;
+                else if (cmd.dir === 'NORTH') targetDir = 3;
+
+                playerState.dir = targetDir;
+                let dx = 0, dy = 0;
+                if (playerState.dir === 0) dx = 1;
+                else if (playerState.dir === 1) dy = 1;
+                else if (playerState.dir === 2) dx = -1;
+                else if (playerState.dir === 3) dy = -1;
+
+                const nx = playerState.x + dx;
+                const ny = playerState.y + dy;
+
+                if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && initialRoadGrid[ny][nx] >= 1) {
+                    playerState.x = nx;
+                    playerState.y = ny;
+                    playSound('step');
+                } else {
+                    playSound('fail');
+                    showToast("Tidak bisa maju ke arah tersebut!", "error");
+                }
+            }
+        }
+
+        // CHECK WIN CONDITION
+        function checkMissionCompletion() {
+            const currentMission = missions[currentMissionIndex];
+
+            if (currentMission.target === 'roundabout') {
+                // Reached center roundabout
+                if (initialRoadGrid[playerState.y][playerState.x] === 2) {
+                    playSound('win');
+                    showToast("Hore! Selamat, kamu berhasil menyelesaikan Tur Utama Kota!", "success");
                     return;
                 }
+            } else {
+                const targetLm = landmarks.find(l => l.id === currentMission.target);
+                if (targetLm) {
+                    // Check if player is on road adjacent to target landmark
+                    const isAdjacent = (
+                        playerState.x >= targetLm.x - 1 && playerState.x <= targetLm.x + targetLm.size[0] &&
+                        playerState.y >= targetLm.y - 1 && playerState.y <= targetLm.y + targetLm.size[1]
+                    );
 
-                const action = actions[stepIndex];
-                stepIndex++;
-
-                if (action.type === "MOVE_FORWARD") {
-                    const vec = DIR_VECTORS[player.dir];
-                    const nextX = player.x + vec.x;
-                    const nextY = player.y + vec.y;
-
-                    if (isRoadCell(nextX, nextY)) {
-                        player.x = nextX;
-                        player.y = nextY;
-                        SFX.step();
-                    } else {
-                        SFX.fail();
-                        showStatus("Menabrak trotoar/bangunan!", "fa-car-burst", "bg-rose-600");
-                        isExecuting = false;
-                        document.getElementById('btnRun').disabled = false;
-                        renderMap();
-                        return;
-                    }
-                } else if (action.type === "TURN_LEFT") {
-                    player.dir = (player.dir + 3) % 4;
-                    SFX.turn();
-                } else if (action.type === "TURN_RIGHT") {
-                    player.dir = (player.dir + 1) % 4;
-                    SFX.turn();
-                } else if (action.type === "MOVE_DIR") {
-                    player.dir = action.dir;
-                    const vec = DIR_VECTORS[player.dir];
-                    const nextX = player.x + vec.x;
-                    const nextY = player.y + vec.y;
-
-                    if (isRoadCell(nextX, nextY)) {
-                        player.x = nextX;
-                        player.y = nextY;
-                        SFX.step();
-                    } else {
-                        SFX.fail();
-                        showStatus("Jalur tersebut terhalang!", "fa-ban", "bg-rose-600");
-                        isExecuting = false;
-                        document.getElementById('btnRun').disabled = false;
-                        renderMap();
+                    if (isAdjacent) {
+                        playSound('win');
+                        showToast(`Luar Biasa! Bus Si Yo telah sampai di ${targetLm.name}!`, "success");
                         return;
                     }
                 }
-
-                renderMap();
-                setTimeout(processNextStep, executionSpeed);
             }
 
-            setTimeout(processNextStep, 150);
+            showToast("Belum sampai tujuan, coba periksa dan susun kembali blok logikamu!", "info");
         }
 
-        function checkMissionCompletion() {
-            const reached = (player.x === currentTargetPos.x && player.y === currentTargetPos.y);
+        // TOAST NOTIFICATIONS
+        function showToast(msg, type = "info") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
 
-            if (reached) {
-                SFX.success();
-                showStatus("HEBAT! Kamu berhasil sampai di tujuan! 🎉", "fa-circle-check", "bg-emerald-600");
-                
-                setTimeout(() => {
-                    if (currentMissionIndex < MISSIONS.length - 1) {
-                        if (confirm(`Luar biasa! Misi ${currentMissionIndex + 1} Selesai.\n\nLanjut ke Misi ${currentMissionIndex + 2}?`)) {
-                            loadMission(currentMissionIndex + 1);
-                        }
-                    } else {
-                        alert("SELAMAT! Kamu telah menyelesaikan SELURUH MISI City Tour!");
-                    }
-                }, 350);
+            toast.className = `toast toast-${type} show`;
+            toastMsg.innerText = msg;
 
-            } else {
-                SFX.fail();
-                showStatus("Belum sampai di tujuan. Coba periksa kodenya!", "fa-circle-exclamation", "bg-amber-600");
-            }
-        }
-
-        function showStatus(msg, iconClass = "fa-info-circle", bgClass = "bg-slate-900") {
-            const banner = document.getElementById('statusBanner');
-            const icon = document.getElementById('statusIcon');
-            const message = document.getElementById('statusMessage');
-
-            message.textContent = msg;
-            icon.className = `fa-solid ${iconClass} text-emerald-400`;
-            banner.className = `absolute top-4 left-1/2 -translate-x-1/2 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-2xl border border-slate-700 transition-all transform scale-100 duration-300 flex items-center gap-2 z-20 ${bgClass}`;
+            if (type === 'success') toastIcon.className = 'fa-solid fa-circle-check';
+            else if (type === 'error') toastIcon.className = 'fa-solid fa-triangle-exclamation';
+            else toastIcon.className = 'fa-solid fa-circle-info';
 
             setTimeout(() => {
-                banner.classList.remove('scale-100');
-                banner.classList.add('scale-0');
-            }, 3000);
+                toast.classList.remove('show');
+            }, 3500);
         }
     </script>
 </body>
