@@ -45,7 +45,7 @@
         header {
             background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
             color: white;
-            padding: 10px 20px;
+            padding: 8px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -60,7 +60,7 @@
         }
 
         .logo-bbgtk {
-            height: 48px;
+            height: 44px;
             width: auto;
             object-fit: contain;
             background: rgba(255, 255, 255, 0.95);
@@ -70,7 +70,7 @@
 
         .header-title h1 {
             font-family: 'Fredoka', cursive;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             letter-spacing: 0.5px;
             display: flex;
             align-items: center;
@@ -78,7 +78,7 @@
         }
 
         .header-title p {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             opacity: 0.9;
         }
 
@@ -93,7 +93,7 @@
         }
 
         .maskot-siyo {
-            height: 42px;
+            height: 40px;
             width: auto;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
@@ -125,11 +125,11 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* MAIN APP CONTENT - SWAPPED LAYOUT */
+        /* MAIN APP CONTENT - HORIZONTAL WIDESCREEN LAYOUT */
         .app-container {
             flex: 1;
             display: grid;
-            grid-template-columns: 460px 1fr; /* LEFT: Blockly Controls, RIGHT: Map Canvas */
+            grid-template-columns: 420px 1fr; /* LEFT: Blockly Controls, RIGHT: Wide Horizontal Canvas Map */
             gap: 12px;
             padding: 12px;
             overflow: hidden;
@@ -203,24 +203,24 @@
         }
 
         .instruction-card {
-            padding: 12px 16px;
+            padding: 10px 14px;
             background: #eff6ff;
             border-top: 1px solid #bfdbfe;
             color: #1e40af;
-            font-size: 0.85rem;
-            line-height: 1.4;
+            font-size: 0.82rem;
+            line-height: 1.35;
             display: flex;
             align-items: flex-start;
             gap: 10px;
         }
 
         .instruction-card i {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             margin-top: 2px;
             color: #3b82f6;
         }
 
-        /* RIGHT PANEL: CITY MAP CANVAS */
+        /* RIGHT PANEL: CITY MAP CANVAS (HORIZONTAL 16:9) */
         .right-panel {
             background: var(--panel-bg);
             border-radius: 16px;
@@ -280,9 +280,7 @@
         .toast-error { background-color: var(--danger); }
         .toast-info { background-color: var(--primary); }
 
-        /* Custom Blockly Styling */
-        .blocklyTreeLabel { font-family: 'Nunito', sans-serif; font-weight: 700; }
-        .blocklyText { font-family: 'Nunito', sans-serif; font-weight: 700; }
+        .blocklyTreeLabel, .blocklyText { font-family: 'Nunito', sans-serif; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -298,7 +296,7 @@
         </div>
 
         <div class="header-mission-select">
-            <img src="maskot-siyo.png" alt="Maskot Si Yo" class="maskot-siyo" onerror="this.src='https://via.placeholder.com/40x40?text=SiYo'">
+            <img src="maskot-siyo.png" id="siyoHeaderImg" alt="Maskot Si Yo" class="maskot-siyo" onerror="this.src='https://via.placeholder.com/40x40?text=SiYo'">
             <div class="mission-dropdown-wrapper">
                 <label for="missionSelect">Pilih Misi Perjalanan:</label>
                 <select id="missionSelect" onchange="changeMission()">
@@ -308,7 +306,7 @@
         </div>
     </header>
 
-    <!-- MAIN APP CONTENT (SWAPPED: LEFT=BLOCKLY, RIGHT=MAP) -->
+    <!-- MAIN APP CONTENT (HORIZONTAL 16:9 ASPECT RATIO) -->
     <div class="app-container">
         
         <!-- LEFT PANEL: BLOCKLY & CONTROLS -->
@@ -335,15 +333,15 @@
                 <i class="fa-solid fa-lightbulb"></i>
                 <div>
                     <strong>Misi Saat Ini:</strong>
-                    <div id="missionDescription">Susun blok logika di atas lalu klik "Jalan!" untuk memandu Bus Si Yo.</div>
+                    <div id="missionDescription">Susun blok logika untuk memandu Si Yo menuju lokasi tujuan.</div>
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT PANEL: CITY MAP CANVAS -->
+        <!-- RIGHT PANEL: CITY MAP CANVAS (MEMANJANG HORIZONTAL) -->
         <div class="right-panel">
             <div class="map-wrapper">
-                <canvas id="cityCanvas" width="800" height="800"></canvas>
+                <canvas id="cityCanvas" width="1120" height="630"></canvas>
             </div>
         </div>
 
@@ -369,87 +367,89 @@
     </xml>
 
     <script>
-        // GRID & CANVAS DIMENSIONS
-        const GRID_SIZE = 14; 
-        const CANVAS_SIZE = 800;
-        const CELL_SIZE = CANVAS_SIZE / GRID_SIZE; // ~57.14px
+        // HORIZONTAL WIDESCREEN GRID DIMENSIONS (16 Columns x 9 Rows)
+        const GRID_COLS = 16; 
+        const GRID_ROWS = 9;
+        const CANVAS_WIDTH = 1120;
+        const CANVAS_HEIGHT = 630;
+        const CELL_SIZE = CANVAS_WIDTH / GRID_COLS; // 70px per square cell
 
         // ROAD NETWORK DEFINITION (0=Building Parcel, 1=Road, 2=Roundabout)
-        const initialRoadGrid = [
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,1,2,1,0,0,0,0,0,0],
-            [1,1,1,1,1,2,2,2,1,1,1,1,1,1],
-            [0,0,0,0,0,1,2,1,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0]
-        ];
+        let initialRoadGrid = [];
 
-        // Ensure 3 perpendicular cross roads dividing city into 4 blocks
-        for (let x = 0; x < 14; x++) {
-            initialRoadGrid[2][x] = 1;  // North Cross Road
-            initialRoadGrid[6][x] = 1;  // Middle Cross Road
-            initialRoadGrid[11][x] = 1; // South Cross Road
-            initialRoadGrid[x][6] = 1;  // Center Vertical Main Road
+        function initRoadNetwork() {
+            initialRoadGrid = Array(GRID_ROWS).fill(0).map(() => Array(GRID_COLS).fill(0));
+
+            // 1. OUTER RING ROAD (Jalan Lingkar Luar Melingkari Kota - Row 0, Row 8, Col 0, Col 15)
+            for (let c = 0; c < GRID_COLS; c++) {
+                initialRoadGrid[0][c] = 1;               // North Ring
+                initialRoadGrid[GRID_ROWS - 1][c] = 1;   // South Ring
+            }
+            for (let r = 0; r < GRID_ROWS; r++) {
+                initialRoadGrid[r][0] = 1;               // West Ring
+                initialRoadGrid[r][GRID_COLS - 1] = 1;   // East Ring
+            }
+
+            // 2. INNER CROSS ROADS (3 Jalan Mendatar & 3 Jalan Tegak Lurus)
+            for (let c = 0; c < GRID_COLS; c++) {
+                initialRoadGrid[2][c] = 1; // Cross North
+                initialRoadGrid[4][c] = 1; // Cross Middle
+                initialRoadGrid[6][c] = 1; // Cross South
+            }
+            for (let r = 0; r < GRID_ROWS; r++) {
+                initialRoadGrid[r][4] = 1;  // Cross West
+                initialRoadGrid[r][8] = 1;  // Cross Center Vertical
+                initialRoadGrid[r][12] = 1; // Cross East
+            }
+
+            // 3. CENTER ROUNDABOUT ALUN-ALUN (Around Center Intersection)
+            initialRoadGrid[3][8] = 2; initialRoadGrid[5][8] = 2;
+            initialRoadGrid[4][7] = 2; initialRoadGrid[4][9] = 2;
         }
-        // Roundabout center ring
-        initialRoadGrid[5][6] = 2; initialRoadGrid[7][6] = 2;
-        initialRoadGrid[6][5] = 2; initialRoadGrid[6][7] = 2;
 
         // 16 LANDMARKS DEFINITIONS
         const landmarkDefinitions = [
-            { id: 'siyo', name: 'Rumah Si Yo', size: [1,1], color: '#f59e0b', icon: 'fa-house-user', cat: 'res' },
-            { id: 'sekolah', name: 'Sekolah', size: [2,1], color: '#3b82f6', icon: 'fa-school', cat: 'edu' },
-            { id: 'stasiun', name: 'Stasiun Kereta & Bus', size: [2,2], color: '#6366f1', icon: 'fa-train-subway', cat: 'trans' },
-            { id: 'rs', name: 'Rumah Sakit', size: [2,2], color: '#ef4444', icon: 'fa-hospital', cat: 'health' },
-            { id: 'apotek', name: 'Apotek', size: [1,1], color: '#10b981', icon: 'fa-pills', cat: 'health' },
-            { id: 'pasar', name: 'Pasar Tradisional', size: [2,1], color: '#d97706', icon: 'fa-store', cat: 'comm' },
-            { id: 'kolam', name: 'Kolam Renang', size: [2,1], color: '#06b6d4', icon: 'fa-person-swimming', cat: 'sport' },
-            { id: 'stadion', name: 'Stadion Utama', size: [2,2], color: '#84cc16', icon: 'fa-futbol', cat: 'sport' },
-            { id: 'polisi', name: 'Kantor Polisi', size: [1,1], color: '#1e40af', icon: 'fa-building-shield', cat: 'gov' },
-            { id: 'tokobuku', name: 'Toko Buku', size: [1,1], color: '#8b5cf6', icon: 'fa-book-open', cat: 'comm' },
-            { id: 'museum', name: 'Museum Kota', size: [2,1], color: '#b45309', icon: 'fa-landmark', cat: 'cult' },
-            { id: 'teater', name: 'Gedung Teater', size: [2,1], color: '#ec4899', icon: 'fa-masks-theater', cat: 'cult' },
-            { id: 'hutan', name: 'Hutan Kota & Camping', size: [2,2], color: '#15803d', icon: 'fa-tree', cat: 'nature' },
-            { id: 'damkar', name: 'Pemadam Kebakaran', size: [2,1], color: '#dc2626', icon: 'fa-fire-extinguisher', cat: 'gov' },
-            { id: 'kelontong', name: 'Toko Kelontong', size: [1,1], color: '#059669', icon: 'fa-basket-shopping', cat: 'comm' },
-            { id: 'walikota', name: 'Kantor Walikota', size: [2,2], color: '#475569', icon: 'fa-building-columns', cat: 'gov' }
+            { id: 'siyo', name: 'Rumah Si Yo', size: [1,1], color: '#f59e0b', cat: 'res' },
+            { id: 'sekolah', name: 'Sekolah', size: [2,1], color: '#3b82f6', cat: 'edu' },
+            { id: 'stasiun', name: 'Stasiun Kereta & Bus', size: [2,1], color: '#6366f1', cat: 'trans' },
+            { id: 'rs', name: 'Rumah Sakit', size: [2,1], color: '#ef4444', cat: 'health' },
+            { id: 'apotek', name: 'Apotek', size: [1,1], color: '#10b981', cat: 'health' },
+            { id: 'pasar', name: 'Pasar Tradisional', size: [2,1], color: '#d97706', cat: 'comm' },
+            { id: 'kolam', name: 'Kolam Renang', size: [2,1], color: '#06b6d4', cat: 'sport' },
+            { id: 'stadion', name: 'Stadion Utama', size: [2,1], color: '#84cc16', cat: 'sport' },
+            { id: 'polisi', name: 'Kantor Polisi', size: [1,1], color: '#1e40af', cat: 'gov' },
+            { id: 'tokobuku', name: 'Toko Buku', size: [1,1], color: '#8b5cf6', cat: 'comm' },
+            { id: 'museum', name: 'Museum Kota', size: [2,1], color: '#b45309', cat: 'cult' },
+            { id: 'teater', name: 'Gedung Teater', size: [2,1], color: '#ec4899', cat: 'cult' },
+            { id: 'hutan', name: 'Hutan Kota & Camping', size: [2,1], color: '#15803d', cat: 'nature' },
+            { id: 'damkar', name: 'Pemadam Kebakaran', size: [2,1], color: '#dc2626', cat: 'gov' },
+            { id: 'kelontong', name: 'Toko Kelontong', size: [1,1], color: '#059669', cat: 'comm' },
+            { id: 'walikota', name: 'Kantor Walikota', size: [2,1], color: '#475569', cat: 'gov' }
         ];
 
-        // FIXED SLOTS (Non-overlapping with roads)
+        // BUILDING PARCEL SLOTS (In-between roads, all surrounded by ring roads)
         const availableSlots = [
-            // Blok Barat Laut (NW)
-            { x: 0, y: 0, w: 2, h: 2 }, { x: 3, y: 0, w: 2, h: 1 }, { x: 0, y: 3, w: 2, h: 2 }, { x: 3, y: 3, w: 2, h: 2 },
-            // Blok Timur Laut (NE)
-            { x: 8, y: 0, w: 2, h: 2 }, { x: 11, y: 0, w: 2, h: 2 }, { x: 8, y: 3, w: 2, h: 2 }, { x: 11, y: 3, w: 2, h: 2 },
-            // Blok Barat Daya (SW)
-            { x: 0, y: 7, w: 2, h: 2 }, { x: 3, y: 7, w: 2, h: 2 }, { x: 0, y: 12, w: 2, h: 1 }, { x: 3, y: 12, w: 2, h: 1 },
-            // Blok Timur Daya (SE)
-            { x: 8, y: 7, w: 2, h: 2 }, { x: 11, y: 7, w: 2, h: 2 }, { x: 8, y: 12, w: 2, h: 1 }, { x: 11, y: 12, w: 2, h: 1 }
+            { x: 1, y: 1, w: 2, h: 1 }, { x: 5, y: 1, w: 2, h: 1 }, { x: 9, y: 1, w: 2, h: 1 }, { x: 13, y: 1, w: 2, h: 1 },
+            { x: 1, y: 3, w: 2, h: 1 }, { x: 5, y: 3, w: 2, h: 1 }, { x: 9, y: 3, w: 2, h: 1 }, { x: 13, y: 3, w: 2, h: 1 },
+            { x: 1, y: 5, w: 2, h: 1 }, { x: 5, y: 5, w: 2, h: 1 }, { x: 9, y: 5, w: 2, h: 1 }, { x: 13, y: 5, w: 2, h: 1 },
+            { x: 1, y: 7, w: 2, h: 1 }, { x: 5, y: 7, w: 2, h: 1 }, { x: 9, y: 7, w: 2, h: 1 }, { x: 13, y: 7, w: 2, h: 1 }
         ];
 
         let landmarks = [];
 
         // MISSIONS DEFINITION - ALL START FROM RUMAH SI YO
         const missions = [
-            { id: 1, title: 'Misi 1: Rumah Si Yo -> Sekolah', start: 'siyo', target: 'sekolah', desc: 'Pandu Bus Si Yo dari Rumah Si Yo menuju Sekolah.' },
-            { id: 2, title: 'Misi 2: Rumah Si Yo -> Stasiun Kereta', start: 'siyo', target: 'stasiun', desc: 'Pandu Bus Si Yo menuju Stasiun Kereta & Bus.' },
-            { id: 3, title: 'Misi 3: Rumah Si Yo -> Rumah Sakit', start: 'siyo', target: 'rs', desc: 'Antar penumpang dari Rumah Si Yo ke Rumah Sakit.' },
+            { id: 1, title: 'Misi 1: Rumah Si Yo -> Sekolah', start: 'siyo', target: 'sekolah', desc: 'Pandu Si Yo dari Rumah Si Yo menuju Sekolah.' },
+            { id: 2, title: 'Misi 2: Rumah Si Yo -> Stasiun Kereta', start: 'siyo', target: 'stasiun', desc: 'Pandu Si Yo menuju Stasiun Kereta & Bus.' },
+            { id: 3, title: 'Misi 3: Rumah Si Yo -> Rumah Sakit', start: 'siyo', target: 'rs', desc: 'Antar Si Yo dari Rumah Si Yo ke Rumah Sakit.' },
             { id: 4, title: 'Misi 4: Rumah Si Yo -> Apotek', start: 'siyo', target: 'apotek', desc: 'Pergi dari Rumah Si Yo menuju Apotek kota.' },
-            { id: 5, title: 'Misi 5: Rumah Si Yo -> Pasar Tradisional', start: 'siyo', target: 'pasar', desc: 'Pandu Bus Si Yo dari Rumah Si Yo menuju Pasar Tradisional.' },
+            { id: 5, title: 'Misi 5: Rumah Si Yo -> Pasar Tradisional', start: 'siyo', target: 'pasar', desc: 'Pandu Si Yo dari Rumah Si Yo menuju Pasar Tradisional.' },
             { id: 6, title: 'Misi 6: Rumah Si Yo -> Toko Buku', start: 'siyo', target: 'tokobuku', desc: 'Antar Si Yo dari rumahnya menuju Toko Buku & Alat Tulis.' },
             { id: 7, title: 'Misi 7: Rumah Si Yo -> Toko Kelontong', start: 'siyo', target: 'kelontong', desc: 'Pergi dari Rumah Si Yo menuju Toko Kelontong.' },
-            { id: 8, title: 'Misi 8: Rumah Si Yo -> Kantor Polisi', start: 'siyo', target: 'polisi', desc: 'Pandu Bus Si Yo menuju Kantor Polisi.' },
+            { id: 8, title: 'Misi 8: Rumah Si Yo -> Kantor Polisi', start: 'siyo', target: 'polisi', desc: 'Pandu Si Yo menuju Kantor Polisi.' },
             { id: 9, title: 'Misi 9: Rumah Si Yo -> Stasiun Damkar', start: 'siyo', target: 'damkar', desc: 'Pergi dari Rumah Si Yo menuju Stasiun Pemadam Kebakaran.' },
             { id: 10, title: 'Misi 10: Rumah Si Yo -> Kolam Renang', start: 'siyo', target: 'kolam', desc: 'Antar Si Yo dari rumah menuju Kompleks Kolam Renang.' },
-            { id: 11, title: 'Misi 11: Rumah Si Yo -> Stadion Utama', start: 'siyo', target: 'stadion', desc: 'Pandu Bus Si Yo dari rumah menuju Stadion Utama.' },
+            { id: 11, title: 'Misi 11: Rumah Si Yo -> Stadion Utama', start: 'siyo', target: 'stadion', desc: 'Pandu Si Yo dari rumah menuju Stadion Utama.' },
             { id: 12, title: 'Misi 12: Rumah Si Yo -> Hutan Kota', start: 'siyo', target: 'hutan', desc: 'Antar wisatawan dari Rumah Si Yo menuju Hutan Kota & Camping Ground.' },
             { id: 13, title: 'Misi 13: Rumah Si Yo -> Gedung Teater', start: 'siyo', target: 'teater', desc: 'Pergi dari Rumah Si Yo menuju Gedung Teater seni.' },
             { id: 14, title: 'Misi 14: Rumah Si Yo -> Museum Kota', start: 'siyo', target: 'museum', desc: 'Pandu perjalanan dari Rumah Si Yo menuju Museum Kota.' },
@@ -462,30 +462,32 @@
         let isExecuting = false;
         let blocklyWorkspace = null;
 
+        // MASKOT SI YO IMAGE OBJECT FOR CANVAS
+        const siyoImg = new Image();
+        siyoImg.src = 'maskot-siyo.png';
+        siyoImg.onload = () => { renderMap(); };
+
         // TONE.JS AUDIO SYNTHESIZER
         const synth = new Tone.Synth().toDestination();
 
         function playSound(type) {
             try {
                 if (Tone.context.state !== 'running') Tone.start();
-                if (type === 'step') {
-                    synth.triggerAttackRelease("C5", "8n");
-                } else if (type === 'turn') {
-                    synth.triggerAttackRelease("E5", "8n");
-                } else if (type === 'win') {
+                if (type === 'step') synth.triggerAttackRelease("C5", "8n");
+                else if (type === 'turn') synth.triggerAttackRelease("E5", "8n");
+                else if (type === 'win') {
                     const now = Tone.now();
                     synth.triggerAttackRelease("G4", "8n", now);
                     synth.triggerAttackRelease("C5", "8n", now + 0.15);
                     synth.triggerAttackRelease("E5", "8n", now + 0.3);
                     synth.triggerAttackRelease("G5", "4n", now + 0.45);
-                } else if (type === 'fail') {
-                    synth.triggerAttackRelease("A3", "4n");
-                }
+                } else if (type === 'fail') synth.triggerAttackRelease("A3", "4n");
             } catch(e) {}
         }
 
         // INITIALIZE APP
         window.onload = function() {
+            initRoadNetwork();
             initBlockly();
             populateMissionDropdown();
             layoutLandmarks();
@@ -493,7 +495,6 @@
             renderMap();
         };
 
-        // POPULATE MISSION DROPDOWN
         function populateMissionDropdown() {
             const select = document.getElementById('missionSelect');
             select.innerHTML = '';
@@ -505,12 +506,11 @@
             });
         }
 
-        // LAYOUT LANDMARKS INTO PARCELS
         function layoutLandmarks() {
             landmarks = [];
             let slotsCopy = [...availableSlots];
 
-            // Shuffle slots array
+            // Shuffle slots array for landmark randomization
             for (let i = slotsCopy.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [slotsCopy[i], slotsCopy[j]] = [slotsCopy[j], slotsCopy[i]];
@@ -534,7 +534,6 @@
             showToast("Posisi landmark di kota berhasil diacak!", "info");
         }
 
-        // BLOCKLY CUSTOM BLOCKS
         function initBlockly() {
             Blockly.Blocks['move_forward'] = {
                 init: function() {
@@ -542,7 +541,6 @@
                     this.setPreviousStatement(true, null);
                     this.setNextStatement(true, null);
                     this.setColour(210);
-                    this.setTooltip("Maju satu petak ke depan");
                 }
             };
 
@@ -552,7 +550,6 @@
                     this.setPreviousStatement(true, null);
                     this.setNextStatement(true, null);
                     this.setColour(210);
-                    this.setTooltip("Putar arah ke kiri");
                 }
             };
 
@@ -562,7 +559,6 @@
                     this.setPreviousStatement(true, null);
                     this.setNextStatement(true, null);
                     this.setColour(210);
-                    this.setTooltip("Putar arah ke kanan");
                 }
             };
 
@@ -603,34 +599,31 @@
             });
         }
 
-        // RESET PLAYER TO MISSION START ROAD
         function resetPlayerToMissionStart() {
             const mission = missions[currentMissionIndex];
             document.getElementById('missionDescription').innerText = mission.desc;
 
             const startLandmark = landmarks.find(l => l.id === mission.start);
             if (startLandmark) {
-                // Find nearest road adjacent to start landmark
                 const roadAdjacent = findAdjacentRoad(startLandmark.x, startLandmark.y, startLandmark.size[0], startLandmark.size[1]);
                 playerState.x = roadAdjacent.x;
                 playerState.y = roadAdjacent.y;
                 playerState.dir = roadAdjacent.dir;
             } else {
-                playerState.x = 0; playerState.y = 2; playerState.dir = 0;
+                playerState.x = 0; playerState.y = 0; playerState.dir = 0;
             }
         }
 
         function findAdjacentRoad(lx, ly, lw, lh) {
-            // Check around building perimeter for a road cell
             for (let x = lx; x < lx + lw; x++) {
                 if (ly - 1 >= 0 && initialRoadGrid[ly - 1][x] >= 1) return { x: x, y: ly - 1, dir: 1 };
-                if (ly + lh < GRID_SIZE && initialRoadGrid[ly + lh][x] >= 1) return { x: x, y: ly + lh, dir: 3 };
+                if (ly + lh < GRID_ROWS && initialRoadGrid[ly + lh][x] >= 1) return { x: x, y: ly + lh, dir: 3 };
             }
             for (let y = ly; y < ly + lh; y++) {
                 if (lx - 1 >= 0 && initialRoadGrid[y][lx - 1] >= 1) return { x: lx - 1, y: y, dir: 0 };
-                if (lx + lw < GRID_SIZE && initialRoadGrid[y][lx + lw] >= 1) return { x: lx + lw, y: y, dir: 2 };
+                if (lx + lw < GRID_COLS && initialRoadGrid[y][lx + lw] >= 1) return { x: lx + lw, y: y, dir: 2 };
             }
-            return { x: 6, y: 2, dir: 1 };
+            return { x: 0, y: 0, dir: 0 };
         }
 
         function changeMission() {
@@ -644,78 +637,62 @@
             renderMap();
         }
 
-        // MAP CANVAS RENDERER
+        // MAP CANVAS RENDERER (WIDESCREEN 16:9)
         function renderMap() {
             const canvas = document.getElementById('cityCanvas');
             const ctx = canvas.getContext('2d');
 
             // 1. CLEAR & GRASS BASE
-            ctx.fillStyle = '#2e7d32'; // Lush grass green
-            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.fillStyle = '#2e7d32'; // Grass green
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            // Subtle grass texture pattern
+            // Subtle grass texture
             ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-            for (let i = 0; i < CANVAS_SIZE; i += 16) {
-                for (let j = 0; j < CANVAS_SIZE; j += 16) {
-                    if ((i + j) % 32 === 0) ctx.fillRect(i, j, 16, 16);
+            for (let i = 0; i < CANVAS_WIDTH; i += 20) {
+                for (let j = 0; j < CANVAS_HEIGHT; j += 20) {
+                    if ((i + j) % 40 === 0) ctx.fillRect(i, j, 20, 20);
                 }
             }
 
-            // 2. DRAW ROADS (SEAMLESS CHARCOAL ASPHALT + SOLID WHITE EDGE LINES)
-            ctx.fillStyle = '#262626'; // Charcoal asphalt road
-
-            // Fill all road tiles
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
+            // 2. DRAW ROADS (SEAMLESS CHARCOAL ASPHALT)
+            ctx.fillStyle = '#262626';
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
                     if (initialRoadGrid[r][c] >= 1) {
                         ctx.fillRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
                     }
                 }
             }
 
-            // Draw Solid White Road Edges (Outer boundaries between road & non-road)
+            // Draw Solid White Road Edges
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
                     if (initialRoadGrid[r][c] >= 1) {
                         const x = c * CELL_SIZE;
                         const y = r * CELL_SIZE;
 
-                        // Top border
-                        if (r === 0 || initialRoadGrid[r - 1][c] === 0) {
-                            ctx.moveTo(x, y); ctx.lineTo(x + CELL_SIZE, y);
-                        }
-                        // Bottom border
-                        if (r === GRID_SIZE - 1 || initialRoadGrid[r + 1][c] === 0) {
-                            ctx.moveTo(x, y + CELL_SIZE); ctx.lineTo(x + CELL_SIZE, y + CELL_SIZE);
-                        }
-                        // Left border
-                        if (c === 0 || initialRoadGrid[r][c - 1] === 0) {
-                            ctx.moveTo(x, y); ctx.lineTo(x, y + CELL_SIZE);
-                        }
-                        // Right border
-                        if (c === GRID_SIZE - 1 || initialRoadGrid[r][c + 1] === 0) {
-                            ctx.moveTo(x + CELL_SIZE, y); ctx.lineTo(x + CELL_SIZE, y + CELL_SIZE);
-                        }
+                        if (r === 0 || initialRoadGrid[r - 1][c] === 0) { ctx.moveTo(x, y); ctx.lineTo(x + CELL_SIZE, y); }
+                        if (r === GRID_ROWS - 1 || initialRoadGrid[r + 1][c] === 0) { ctx.moveTo(x, y + CELL_SIZE); ctx.lineTo(x + CELL_SIZE, y + CELL_SIZE); }
+                        if (c === 0 || initialRoadGrid[r][c - 1] === 0) { ctx.moveTo(x, y); ctx.lineTo(x, y + CELL_SIZE); }
+                        if (c === GRID_COLS - 1 || initialRoadGrid[r][c + 1] === 0) { ctx.moveTo(x + CELL_SIZE, y); ctx.lineTo(x + CELL_SIZE, y + CELL_SIZE); }
                     }
                 }
             }
             ctx.stroke();
 
             // 3. DRAW ROUNDABOUT ALUN-ALUN PUSAT KOTA
-            const cx = 6.5 * CELL_SIZE;
-            const cy = 6.5 * CELL_SIZE;
+            const cx = 8.5 * CELL_SIZE;
+            const cy = 4.5 * CELL_SIZE;
             ctx.fillStyle = '#15803d';
-            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 1.1, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 0.9, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
 
             // Roundabout Fountain
             ctx.fillStyle = '#38bdf8';
-            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 0.5, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 0.2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 0.4, 0, Math.PI * 2); ctx.fill();
 
             // 4. DRAW LANDMARKS / BUILDINGS
             landmarks.forEach(lm => {
@@ -735,29 +712,22 @@
                 }
             }
 
-            // 5. DRAW OVERLAY STRIMIN GRID LINES (FINELY DASHED GUIDELINES ACROSS WHOLE MAP)
+            // 5. OVERLAY STRIMIN GRID LINES
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
             ctx.lineWidth = 1;
             ctx.setLineDash([3, 3]);
-            for (let i = 0; i <= GRID_SIZE; i++) {
-                // Vertical lines
-                ctx.beginPath();
-                ctx.moveTo(i * CELL_SIZE, 0);
-                ctx.lineTo(i * CELL_SIZE, CANVAS_SIZE);
-                ctx.stroke();
-                // Horizontal lines
-                ctx.beginPath();
-                ctx.moveTo(0, i * CELL_SIZE);
-                ctx.lineTo(CANVAS_SIZE, i * CELL_SIZE);
-                ctx.stroke();
+            for (let c = 0; c <= GRID_COLS; c++) {
+                ctx.beginPath(); ctx.moveTo(c * CELL_SIZE, 0); ctx.lineTo(c * CELL_SIZE, CANVAS_HEIGHT); ctx.stroke();
             }
-            ctx.setLineDash([]); // Reset dash
+            for (let r = 0; r <= GRID_ROWS; r++) {
+                ctx.beginPath(); ctx.moveTo(0, r * CELL_SIZE); ctx.lineTo(CANVAS_WIDTH, r * CELL_SIZE); ctx.stroke();
+            }
+            ctx.setLineDash([]);
 
-            // 6. DRAW PLAYER CHARACTER (BUS SI YO)
-            drawPlayerBus(ctx);
+            // 6. DRAW PLAYER CHARACTER (PROPORSIONAL MASKOT SI YO)
+            drawPlayerSiyo(ctx);
         }
 
-        // DETAILED REALISTIC LANDMARK DRAWING
         function drawLandmarkBuilding(ctx, lm) {
             const x = lm.x * CELL_SIZE + 4;
             const y = lm.y * CELL_SIZE + 4;
@@ -773,78 +743,63 @@
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill();
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 2; ctx.stroke();
 
-            // Custom Roof Architecture Details
+            // Roof Architecture
             if (lm.id === 'stadion') {
-                // Soccer Field Inner
                 ctx.fillStyle = '#4ade80';
-                ctx.fillRect(x + 12, y + 12, w - 24, h - 24);
-                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
-                ctx.strokeRect(x + 12, y + 12, w - 24, h - 24);
-                ctx.beginPath(); ctx.arc(x + w/2, y + h/2, 10, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillRect(x + 10, y + 8, w - 20, h - 16);
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 10, y + 8, w - 20, h - 16);
             } else if (lm.id === 'rs') {
-                // Helipad
                 ctx.fillStyle = '#94a3b8';
-                ctx.beginPath(); ctx.arc(x + w/2, y + h/2, 16, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
-                ctx.fillStyle = '#dc2626'; ctx.font = 'bold 16px Nunito'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.beginPath(); ctx.arc(x + w/2, y + h/2, 14, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#dc2626'; ctx.font = 'bold 14px Nunito'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText('H', x + w/2, y + h/2);
-            } else if (lm.id === 'stasiun') {
-                // Railway tracks
-                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.moveTo(x, y + 15); ctx.lineTo(x + w, y + 15); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(x, y + 25); ctx.lineTo(x + w, y + 25); ctx.stroke();
             } else if (lm.id === 'kolam') {
-                // Swimming pool water
                 ctx.fillStyle = '#38bdf8';
                 ctx.fillRect(x + 8, y + 8, w - 16, h - 16);
-            } else if (lm.id === 'hutan') {
-                // Trees and Campfire
-                ctx.fillStyle = '#166534';
-                ctx.beginPath(); ctx.arc(x + 20, y + 20, 14, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(x + w - 20, y + 20, 14, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(x + 20, y + h - 20, 14, 0, Math.PI*2); ctx.fill();
-                // Tents
-                ctx.fillStyle = '#f97316';
-                ctx.beginPath(); ctx.moveTo(x + w/2, y + h/2 - 10); ctx.lineTo(x + w/2 - 10, y + h/2 + 8); ctx.lineTo(x + w/2 + 10, y + h/2 + 8); ctx.fill();
             }
 
-            // Landmark Text Badge directly on map
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            // Landmark Text Badge
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
             ctx.beginPath(); ctx.roundRect(x + 4, y + h - 22, w - 8, 18, 4); ctx.fill();
 
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 10px Nunito';
+            ctx.font = 'bold 11px Nunito';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(lm.name, x + w / 2, y + h - 13);
         }
 
-        // DRAW PLAYER BUS VEHICLE
-        function drawPlayerBus(ctx) {
+        // DRAW SI YO MASKOT CHARACTER ON CANVAS
+        function drawPlayerSiyo(ctx) {
             const px = playerState.x * CELL_SIZE + CELL_SIZE / 2;
             const py = playerState.y * CELL_SIZE + CELL_SIZE / 2;
+            const maskotSize = CELL_SIZE * 0.75; // Proportionally scaled size
 
             ctx.save();
             ctx.translate(px, py);
+
+            // Glowing halo background circle to highlight Si Yo's position
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
+            ctx.beginPath(); ctx.arc(0, 0, CELL_SIZE * 0.45, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.stroke();
+
+            // Draw Maskot Image if loaded, fallback to icon
+            if (siyoImg.complete && siyoImg.naturalWidth !== 0) {
+                ctx.drawImage(siyoImg, -maskotSize / 2, -maskotSize / 2, maskotSize, maskotSize);
+            } else {
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // Direction Arrow Indicator
             ctx.rotate(playerState.dir * Math.PI / 2);
-
-            // Bus Body
-            ctx.fillStyle = '#f59e0b'; // Amber yellow
-            ctx.beginPath(); ctx.roundRect(-18, -12, 36, 24, 6); ctx.fill();
-            ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2; ctx.stroke();
-
-            // Windshield Front
-            ctx.fillStyle = '#38bdf8';
-            ctx.fillRect(8, -9, 7, 18);
-
-            // Roof
-            ctx.fillStyle = '#fbbf24';
-            ctx.fillRect(-12, -8, 18, 16);
-
-            // Headlights
-            ctx.fillStyle = '#fef08a';
-            ctx.fillRect(16, -10, 3, 4);
-            ctx.fillRect(16, 6, 3, 4);
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(22, 0);
+            ctx.lineTo(14, -6);
+            ctx.lineTo(14, 6);
+            ctx.closePath();
+            ctx.fill();
 
             ctx.restore();
         }
@@ -920,13 +875,13 @@
                 const nx = playerState.x + dx;
                 const ny = playerState.y + dy;
 
-                if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && initialRoadGrid[ny][nx] >= 1) {
+                if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS && initialRoadGrid[ny][nx] >= 1) {
                     playerState.x = nx;
                     playerState.y = ny;
                     playSound('step');
                 } else {
                     playSound('fail');
-                    showToast("Ups! Karakter menabrak trotoar/bangunan!", "error");
+                    showToast("Ups! Si Yo menabrak trotoar/bangunan!", "error");
                 }
             } else if (cmd.type === 'TURN_LEFT') {
                 playerState.dir = (playerState.dir + 3) % 4;
@@ -951,7 +906,7 @@
                 const nx = playerState.x + dx;
                 const ny = playerState.y + dy;
 
-                if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && initialRoadGrid[ny][nx] >= 1) {
+                if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS && initialRoadGrid[ny][nx] >= 1) {
                     playerState.x = nx;
                     playerState.y = ny;
                     playSound('step');
@@ -967,16 +922,14 @@
             const currentMission = missions[currentMissionIndex];
 
             if (currentMission.target === 'roundabout') {
-                // Reached center roundabout
                 if (initialRoadGrid[playerState.y][playerState.x] === 2) {
                     playSound('win');
-                    showToast("Hore! Selamat, kamu berhasil menyelesaikan Tur Utama Kota!", "success");
+                    showToast("Hore! Selamat, Si Yo berhasil menyelesaikan Tur Utama Kota!", "success");
                     return;
                 }
             } else {
                 const targetLm = landmarks.find(l => l.id === currentMission.target);
                 if (targetLm) {
-                    // Check if player is on road adjacent to target landmark
                     const isAdjacent = (
                         playerState.x >= targetLm.x - 1 && playerState.x <= targetLm.x + targetLm.size[0] &&
                         playerState.y >= targetLm.y - 1 && playerState.y <= targetLm.y + targetLm.size[1]
@@ -984,7 +937,7 @@
 
                     if (isAdjacent) {
                         playSound('win');
-                        showToast(`Luar Biasa! Bus Si Yo telah sampai di ${targetLm.name}!`, "success");
+                        showToast(`Luar Biasa! Si Yo telah sampai di ${targetLm.name}!`, "success");
                         return;
                     }
                 }
@@ -993,7 +946,6 @@
             showToast("Belum sampai tujuan, coba periksa dan susun kembali blok logikamu!", "info");
         }
 
-        // TOAST NOTIFICATIONS
         function showToast(msg, type = "info") {
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toastMessage');
