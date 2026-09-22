@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Petualangan City Tour - BBGTK DIY</title>
+    <title>Kotaku - BBGTK DIY</title>
     <!-- FontAwesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -70,7 +70,7 @@
 
         .header-title h1 {
             font-family: 'Fredoka', cursive;
-            font-size: 1.35rem;
+            font-size: 1.4rem;
             letter-spacing: 0.5px;
             display: flex;
             align-items: center;
@@ -286,8 +286,8 @@
         <div class="header-brand">
             <img src="bbgtk diy logo.png" alt="BBGTK DIY Logo" class="logo-bbgtk" onerror="this.src='https://via.placeholder.com/120x40?text=BBGTK+DIY'">
             <div class="header-title">
-                <h1><i class="fa-solid fa-map-location-dot"></i> City Tour Numerasi & Spasial</h1>
-                <p>Aktivitas Pemrograman Logika & Navigasi Kota</p>
+                <h1><i class="fa-solid fa-map-location-dot"></i> Kotaku</h1>
+                <p>Aktivitas Pemrograman Logika & Navigasi Spasial</p>
             </div>
         </div>
 
@@ -346,7 +346,7 @@
     <!-- TOAST NOTIFICATION -->
     <div id="toast" class="toast toast-info">
         <i class="fa-solid fa-circle-info" id="toastIcon"></i>
-        <span id="toastMessage">Selamat Datang!</span>
+        <span id="toastMessage">Selamat Datang di Kotaku!</span>
     </div>
 
     <!-- BLOCKLY TOOLBOX XML CONFIG -->
@@ -363,15 +363,14 @@
     </xml>
 
     <script>
-        // GRID NAVIGASI (24 COLS x 14 ROWS for smooth navigation & accurate spatial positioning)
+        // GRID NAVIGASI (24 COLS x 14 ROWS)
         const GRID_COLS = 24; 
         const GRID_ROWS = 14;
         const CANVAS_WIDTH = 1200;
         const CANVAS_HEIGHT = 700;
         const CELL_SIZE = CANVAS_WIDTH / GRID_COLS; // 50px per step
 
-        // ROAD NETWORK SYSTEM (0=Land/Block, 1=Road, 2=Roundabout)
-        // 6 REALISTIC CITY BLOCKS: Outer Ring Road + 1 Horizontal Middle Road + 2 Vertical Cross Roads
+        // ROAD NETWORK SYSTEM (0=Land/Block, 1=Road, 2=Roundabout Loop Road)
         let initialRoadGrid = [];
 
         function initRoadNetwork() {
@@ -398,11 +397,17 @@
                 initialRoadGrid[r][16] = 1;
             }
 
-            // 4. BUNDARAN ALUN-ALUN PUSAT KOTA (Roundabout at Center Intersection: Col 12, Row 7)
-            initialRoadGrid[6][12] = 2; initialRoadGrid[8][12] = 2;
-            initialRoadGrid[7][11] = 2; initialRoadGrid[7][13] = 2;
-            // Connect roundabout to middle road
-            initialRoadGrid[7][12] = 2;
+            // 4. JALAN MENGELILINGI ALUN-ALUN PUSAT KOTA (Square Loop Road around Alun-Alun: Cols 11-13, Rows 6-8)
+            // North & South loop segments
+            for (let c = 11; c <= 13; c++) {
+                initialRoadGrid[6][c] = 2;
+                initialRoadGrid[8][c] = 2;
+            }
+            // West & East loop segments
+            for (let r = 6; r <= 8; r++) {
+                initialRoadGrid[r][11] = 2;
+                initialRoadGrid[r][13] = 2;
+            }
         }
 
         // 16 LANDMARKS DEFINITIONS
@@ -425,7 +430,7 @@
             { id: 'walikota', name: 'Kantor Walikota', size: [3.2,2], color: '#475569', cat: 'gov' }
         ];
 
-        // 16 FIXED BUILDING SLOTS LOCATED INSIDE THE 6 CITY BLOCKS (SURROUNDED BY ROADS)
+        // 16 FIXED BUILDING SLOTS LOCATED INSIDE THE 6 CITY BLOCKS
         const availableSlots = [
             // Blok 1 (Barat-Atas)
             { x: 1.5, y: 1.2 }, { x: 4.8, y: 1.2 }, { x: 1.5, y: 4.0 },
@@ -460,7 +465,7 @@
             { id: 13, title: 'Misi 13: Rumah Si Yo -> Gedung Teater', start: 'siyo', target: 'teater', desc: 'Pergi dari Rumah Si Yo menuju Gedung Teater seni.' },
             { id: 14, title: 'Misi 14: Rumah Si Yo -> Museum Kota', start: 'siyo', target: 'museum', desc: 'Pandu perjalanan dari Rumah Si Yo menuju Museum Kota.' },
             { id: 15, title: 'Misi 15: Rumah Si Yo -> Kantor Walikota', start: 'siyo', target: 'walikota', desc: 'Antar rombongan dari Rumah Si Yo ke Kantor Walikota.' },
-            { id: 16, title: 'Misi 16: Tur Utama -> Alun-Alun Pusat Kota', start: 'siyo', target: 'roundabout', desc: 'Jelajahi kota dari Rumah Si Yo menuju Bundaran Alun-Alun Pusat Kota.' }
+            { id: 16, title: 'Misi 16: Tur Utama -> Alun-Alun Pusat Kota', start: 'siyo', target: 'roundabout', desc: 'Jelajahi kota dari Rumah Si Yo menuju Jalan Lingkar Alun-Alun Pusat Kota.' }
         ];
 
         let currentMissionIndex = 0;
@@ -653,7 +658,7 @@
             const canvas = document.getElementById('cityCanvas');
             const ctx = canvas.getContext('2d');
 
-            // 1. CLEAR & LUSH GREEN LANDSCAPING BASE (PARKS & CITY BLOCKS)
+            // 1. CLEAR & LUSH GREEN LANDSCAPING BASE
             ctx.fillStyle = '#276738'; // Park Green Base
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -696,16 +701,21 @@
             }
             ctx.stroke();
 
-            // 3. DRAW BUNDARAN ALUN-ALUN PUSAT KOTA (Roundabout at Col 12, Row 7)
-            const cx = 12.5 * CELL_SIZE;
-            const cy = 7.5 * CELL_SIZE;
+            // 3. DRAW ALUN-ALUN PUSAT KOTA (Center Park inside loop: Col 12, Row 7)
+            const parkX = 12 * CELL_SIZE;
+            const parkY = 7 * CELL_SIZE;
+            
             ctx.fillStyle = '#15803d';
-            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 1.1, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3.5; ctx.stroke();
+            ctx.fillRect(parkX, parkY, CELL_SIZE, CELL_SIZE);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(parkX, parkY, CELL_SIZE, CELL_SIZE);
 
-            // Roundabout Fountain
+            // Alun-Alun Fountain
             ctx.fillStyle = '#38bdf8';
-            ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 0.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath();
+            ctx.arc(parkX + CELL_SIZE / 2, parkY + CELL_SIZE / 2, CELL_SIZE * 0.35, 0, Math.PI * 2);
+            ctx.fill();
 
             // 4. DRAW LANDMARKS / BUILDINGS INSIDE CITY BLOCKS
             landmarks.forEach(lm => {
@@ -937,7 +947,7 @@
             if (currentMission.target === 'roundabout') {
                 if (initialRoadGrid[playerState.y][playerState.x] === 2) {
                     playSound('win');
-                    showToast("Hore! Selamat, Si Yo berhasil menyelesaikan Tur Utama Kota!", "success");
+                    showToast("Hore! Selamat, Si Yo berhasil sampai di Jalan Lingkar Alun-Alun!", "success");
                     return;
                 }
             } else {
