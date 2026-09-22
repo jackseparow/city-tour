@@ -428,7 +428,7 @@
             { id: 'walikota', name: 'Kantor Walikota', size: [2.6, 1.4], color: '#475569', cat: 'gov' }
         ];
 
-        // 16 STRICT SLOTS GUARANTEED ABSOLUTELY FREE FROM ROADS & ROUNDABOUT
+        // 16 STRICT BUILDING SLOTS
         const availableSlots = [
             // Blok 1 (Barat-Atas)
             { x: 1.3, y: 1.3 }, { x: 4.6, y: 1.3 }, { x: 1.3, y: 4.3 },
@@ -444,24 +444,69 @@
             { x: 17.3, y: 8.3 }, { x: 20.4, y: 8.3 }
         ];
 
-        // TOP-DOWN DECORATIVE TREES (STACKED CANOPY & STAR PALMS)
-        const decorativeTrees = [
-            // Alun-Alun Central Fountain Park
-            { x: 12.15, y: 7.15, r: 16, type: 'stacked' }, 
-            { x: 12.85, y: 7.15, r: 16, type: 'stacked' }, 
-            { x: 12.15, y: 7.85, r: 14, type: 'palm' }, 
-            { x: 12.85, y: 7.85, r: 14, type: 'palm' },
-            // Green Buffer Belts (Corner Grasslands)
-            { x: 4.8, y: 4.4, r: 18, type: 'stacked' }, 
-            { x: 5.6, y: 4.5, r: 14, type: 'palm' },
-            { x: 20.2, y: 4.4, r: 18, type: 'stacked' }, 
-            { x: 21.0, y: 4.5, r: 14, type: 'palm' },
-            { x: 4.8, y: 11.4, r: 18, type: 'stacked' }, 
-            { x: 5.6, y: 11.5, r: 14, type: 'palm' },
-            { x: 20.2, y: 11.4, r: 18, type: 'stacked' }, 
-            { x: 21.0, y: 11.5, r: 14, type: 'palm' }
+        // 8 FIXED TREE CLUSTER SLOTS (PARKS/GREEN BELTS)
+        const treeClusterSlots = [
+            // Cluster 1: Alun-Alun Fountain Park
+            [
+                { dx: 0.15, dy: 0.15, combo: '3_layers' },
+                { dx: 0.85, dy: 0.15, combo: '2_large_small' },
+                { dx: 0.15, dy: 0.85, combo: '2_small_tiny' },
+                { dx: 0.85, dy: 0.85, combo: 'palm' }
+            ],
+            // Cluster 2: Taman Barat Laut
+            [
+                { dx: 0, dy: 0, combo: '3_layers' },
+                { dx: 0.6, dy: 0.2, combo: '2_large_tiny' },
+                { dx: 0.2, dy: 0.6, combo: 'palm' }
+            ],
+            // Cluster 3: Taman Timur Laut
+            [
+                { dx: 0, dy: 0, combo: '2_large_small' },
+                { dx: 0.6, dy: 0.1, combo: '3_layers' },
+                { dx: 0.3, dy: 0.6, combo: '2_small_tiny' }
+            ],
+            // Cluster 4: Taman Barat Daya
+            [
+                { dx: 0, dy: 0, combo: '3_layers' },
+                { dx: 0.7, dy: 0.2, combo: 'palm' },
+                { dx: 0.2, dy: 0.7, combo: '2_large_tiny' }
+            ],
+            // Cluster 5: Taman Timur Daya
+            [
+                { dx: 0, dy: 0, combo: '2_large_small' },
+                { dx: 0.6, dy: 0.2, combo: '3_layers' },
+                { dx: 0.2, dy: 0.6, combo: '2_small_tiny' }
+            ],
+            // Cluster 6: Ruang Hijau Tengah-Atas
+            [
+                { dx: 0, dy: 0, combo: '3_layers' },
+                { dx: 0.5, dy: 0.3, combo: 'palm' }
+            ],
+            // Cluster 7: Ruang Hijau Tengah-Bawah
+            [
+                { dx: 0, dy: 0, combo: '2_large_small' },
+                { dx: 0.4, dy: 0.4, combo: '3_layers' }
+            ],
+            // Cluster 8: Jalur Hijau Samping Alun-Alun
+            [
+                { dx: 0, dy: 0, combo: 'palm' },
+                { dx: 0.5, dy: 0.1, combo: '2_large_tiny' }
+            ]
         ];
 
+        // 8 CLUSTER LOCATIONS ON LAND
+        const clusterLocations = [
+            { x: 12.0, y: 7.0 },  // Alun-Alun Center
+            { x: 4.8, y: 4.3 },   // Blok 1 Green Belt
+            { x: 20.2, y: 4.3 },  // Blok 3 Green Belt
+            { x: 4.8, y: 11.3 },  // Blok 4 Green Belt
+            { x: 20.2, y: 11.3 }, // Blok 6 Green Belt
+            { x: 12.8, y: 4.2 },  // Blok 2 Green Belt
+            { x: 12.8, y: 11.3 }, // Blok 5 Green Belt
+            { x: 9.3, y: 6.0 }    // Loop Buffer
+        ];
+
+        let activeTreeClusters = [];
         let landmarks = [];
 
         // MISSIONS DEFINITION - ALL START FROM RUMAH SI YO
@@ -518,6 +563,7 @@
             initBlockly();
             populateMissionDropdown();
             layoutLandmarks();
+            layoutTreeClusters();
             resetPlayerToMissionStart();
             renderMap();
         };
@@ -552,12 +598,36 @@
             });
         }
 
+        // LAYOUT & SHUFFLE TREE CLUSTERS
+        function layoutTreeClusters() {
+            activeTreeClusters = [];
+            let locationsCopy = [...clusterLocations];
+
+            // Shuffle cluster location assignments
+            for (let i = locationsCopy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [locationsCopy[i], locationsCopy[j]] = [locationsCopy[j], locationsCopy[i]];
+            }
+
+            treeClusterSlots.forEach((template, idx) => {
+                const loc = locationsCopy[idx % locationsCopy.length];
+                template.forEach(item => {
+                    activeTreeClusters.push({
+                        x: loc.x + item.dx,
+                        y: loc.y + item.dy,
+                        combo: item.combo
+                    });
+                });
+            });
+        }
+
         function shuffleLandmarks() {
             if (isExecuting) return;
             layoutLandmarks();
+            layoutTreeClusters();
             resetPlayerToMissionStart();
             renderMap();
-            showToast("Posisi landmark di kota berhasil diacak!", "info");
+            showToast("Posisi landmark & cluster pohon di kota berhasil diacak!", "info");
         }
 
         function initBlockly() {
@@ -730,13 +800,9 @@
             ctx.arc(parkX + CELL_SIZE / 2, parkY + CELL_SIZE / 2, CELL_SIZE * 0.28, 0, Math.PI * 2);
             ctx.fill();
 
-            // 4. DRAW DECORATIVE TREES (STACKED & PALMS)
-            decorativeTrees.forEach(t => {
-                if (t.type === 'palm') {
-                    drawPalmTree(ctx, t.x * CELL_SIZE, t.y * CELL_SIZE, t.r);
-                } else {
-                    drawStackedTree(ctx, t.x * CELL_SIZE, t.y * CELL_SIZE, t.r);
-                }
+            // 4. DRAW DYNAMIC TREE CLUSTERS
+            activeTreeClusters.forEach(tc => {
+                drawCustomTreeCombo(ctx, tc.x * CELL_SIZE, tc.y * CELL_SIZE, tc.combo);
             });
 
             // 5. DRAW LANDMARKS / BUILDINGS
@@ -776,39 +842,53 @@
             drawPlayerSiyo(ctx);
         }
 
-        // DRAW MULTI-LAYERED STACKED CANOPY TREE
-        function drawStackedTree(ctx, x, y, r) {
-            // Soft Drop Shadow
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.beginPath(); ctx.arc(x + 4, y + 4, r, 0, Math.PI * 2); ctx.fill();
+        // CUSTOM MULTI-LAYER CANOPY COMBINATIONS
+        // Radii sizes: Large = 18px, Medium/Small = 12px, Tiny = 8px
+        function drawCustomTreeCombo(ctx, x, y, combo) {
+            if (combo === '3_layers') {
+                // Tumpuk 3: Besar (18), Lebih Kecil (12), Paling Kecil (7)
+                drawTreeCanopyLayer(ctx, x, y, 18, '#14532d', true);
+                drawTreeCanopyLayer(ctx, x - 2, y - 2, 12, '#16a34a', false);
+                drawTreeCanopyLayer(ctx, x - 4, y - 4, 7, '#86efac', false);
+            } else if (combo === '2_small_tiny') {
+                // Tumpuk 2: Kecil (12) dan Paling Kecil (7)
+                drawTreeCanopyLayer(ctx, x, y, 12, '#15803d', true);
+                drawTreeCanopyLayer(ctx, x - 2, y - 2, 7, '#4ade80', false);
+            } else if (combo === '2_large_small') {
+                // Tumpuk 2: Besar (18) dan Kecil (12)
+                drawTreeCanopyLayer(ctx, x, y, 18, '#14532d', true);
+                drawTreeCanopyLayer(ctx, x - 3, y - 3, 12, '#22c55e', false);
+            } else if (combo === '2_large_tiny') {
+                // Tumpuk 2: Besar (18) dan Paling Kecil (7)
+                drawTreeCanopyLayer(ctx, x, y, 18, '#14532d', true);
+                drawTreeCanopyLayer(ctx, x - 4, y - 4, 7, '#86efac', false);
+            } else if (combo === 'palm') {
+                drawPalmTree(ctx, x, y, 15);
+            } else {
+                drawTreeCanopyLayer(ctx, x, y, 14, '#15803d', true);
+            }
+        }
 
-            // Bottom Large Canopy (Dark Green)
-            ctx.fillStyle = '#14532d';
-            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-
-            // Middle Medium Canopy (Vibrant Green)
-            ctx.fillStyle = '#16a34a';
-            ctx.beginPath(); ctx.arc(x - r * 0.15, y - r * 0.15, r * 0.7, 0, Math.PI * 2); ctx.fill();
-
-            // Top Small Canopy (Bright Light Green)
-            ctx.fillStyle = '#4ade80';
-            ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.4, 0, Math.PI * 2); ctx.fill();
+        function drawTreeCanopyLayer(ctx, x, y, radius, color, hasShadow) {
+            if (hasShadow) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+                ctx.beginPath(); ctx.arc(x + 3, y + 3, radius, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
         }
 
         // DRAW STAR-SHAPED PALM TREE TOP-DOWN
         function drawPalmTree(ctx, x, y, r) {
-            // Shadow
             ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
             ctx.beginPath(); ctx.arc(x + 3, y + 3, r * 0.8, 0, Math.PI * 2); ctx.fill();
 
             ctx.save();
             ctx.translate(x, y);
 
-            // Center Trunk top
             ctx.fillStyle = '#78350f';
             ctx.beginPath(); ctx.arc(0, 0, r * 0.25, 0, Math.PI * 2); ctx.fill();
 
-            // 8 Star-shaped Palm Fronds
             ctx.fillStyle = '#15803d';
             for (let i = 0; i < 8; i++) {
                 ctx.rotate(Math.PI / 4);
@@ -819,7 +899,6 @@
                 ctx.fill();
             }
 
-            // Bright Center Highlight
             ctx.fillStyle = '#fde047';
             ctx.beginPath(); ctx.arc(0, 0, r * 0.12, 0, Math.PI * 2); ctx.fill();
 
@@ -873,15 +952,15 @@
 
             // Custom Architecture Details
             if (lm.id === 'hutan') {
-                // HUTAN KOTA & CAMPING GROUND: EXTRA RIMBUN WITH TREES & CAMPSITE
+                // HUTAN KOTA & CAMPING GROUND: EXTRA RIMBUN WITH CLUSTERS OF TREES
                 ctx.fillStyle = '#166534';
                 ctx.fillRect(x + 4, y + 4, w - 8, h - 8);
 
-                // Dense stacked trees and palms inside forest
-                drawStackedTree(ctx, x + 16, y + 16, 12);
-                drawStackedTree(ctx, x + w - 16, y + 16, 12);
-                drawPalmTree(ctx, x + w / 2, y + 18, 11);
-                drawStackedTree(ctx, x + 18, y + h - 18, 12);
+                // Multiple 3-layer and 2-layer canopy trees
+                drawCustomTreeCombo(ctx, x + 16, y + 16, '3_layers');
+                drawCustomTreeCombo(ctx, x + w - 16, y + 16, '2_large_small');
+                drawCustomTreeCombo(ctx, x + w / 2, y + 18, 'palm');
+                drawCustomTreeCombo(ctx, x + 18, y + h - 18, '2_small_tiny');
 
                 // Tents
                 ctx.fillStyle = '#f97316';
