@@ -602,7 +602,7 @@
                 }
             };
 
-            // BLOK "HADAP ARAH" (HANYA MENGUBAH ORIENTASI/ORIENTASI SI YO HDF)
+            // BLOK "HADAP ARAH" (HANYA MENGUBAH ORIENTASI SI YO TANPA MAJU)
             Blockly.Blocks['move_cardinal'] = {
                 init: function() {
                     this.appendDummyInput()
@@ -674,50 +674,81 @@
                     ...def,
                     x: slot.x,
                     y: slot.y,
-                    gate: gateInfo.roadCoord, // KOORDINAT JALAN DI DEPAN GERBANG UNTUK BERDIRI SI YO
+                    gate: gateInfo.roadCoord, // KOORDINAT PETAK JALAN DI DEPAN GERBANG
                     gatePos: gateInfo.edgePos  // KOORDINAT VISUAL GERBANG PAGAR DI SISI LANDMARK
                 });
             });
         }
 
+        // FUNGSI PERBAIKAN: MEMILIH PETAK JALAN TERDEKAT DAN PALING MUDAH DIAKSES DENGAN PRESISE
         function calculateLandmarkGate(lx, ly, lw, lh) {
             if (!initialRoadGrid || initialRoadGrid.length === 0) {
                 return { roadCoord: { x: 0, y: 0, dir: 0 }, edgePos: { x: lx, y: ly, side: 'top' } };
             }
+
             const ix = Math.floor(lx);
             const iy = Math.floor(ly);
             const iw = Math.ceil(lw);
             const ih = Math.ceil(lh);
 
-            // Sisi Atas / Bawah
-            for (let x = ix; x < ix + iw; x++) {
-                if (iy - 1 >= 0 && initialRoadGrid[iy - 1][x] >= 1) {
-                    return {
-                        roadCoord: { x: x, y: iy - 1, dir: 1 },
-                        edgePos: { x: (lx + lw / 2) * CELL_SIZE, y: ly * CELL_SIZE, side: 'top' }
-                    };
-                }
-                if (iy + ih < GRID_ROWS && initialRoadGrid[iy + ih][x] >= 1) {
-                    return {
-                        roadCoord: { x: x, y: iy + ih, dir: 3 },
-                        edgePos: { x: (lx + lw / 2) * CELL_SIZE, y: (ly + lh) * CELL_SIZE, side: 'bottom' }
-                    };
+            let candidates = [];
+
+            // 1. CEK SISI UTARA (ATAS)
+            if (iy - 1 >= 0) {
+                for (let x = ix; x < ix + iw && x < GRID_COLS; x++) {
+                    if (initialRoadGrid[iy - 1][x] >= 1) {
+                        candidates.push({
+                            roadCoord: { x: x, y: iy - 1, dir: 1 },
+                            edgePos: { x: (lx + lw / 2) * CELL_SIZE, y: ly * CELL_SIZE, side: 'top' },
+                            priority: (yNearMiddleRoad(iy - 1) ? 1 : 2)
+                        });
+                    }
                 }
             }
-            // Sisi Kiri / Kanan
-            for (let y = iy; y < iy + ih; y++) {
-                if (ix - 1 >= 0 && initialRoadGrid[y][ix - 1] >= 1) {
-                    return {
-                        roadCoord: { x: ix - 1, y: y, dir: 0 },
-                        edgePos: { x: lx * CELL_SIZE, y: (ly + lh / 2) * CELL_SIZE, side: 'left' }
-                    };
+
+            // 2. CEK SISI SELATAN (BAWAH)
+            if (iy + ih < GRID_ROWS) {
+                for (let x = ix; x < ix + iw && x < GRID_COLS; x++) {
+                    if (initialRoadGrid[iy + ih][x] >= 1) {
+                        candidates.push({
+                            roadCoord: { x: x, y: iy + ih, dir: 3 },
+                            edgePos: { x: (lx + lw / 2) * CELL_SIZE, y: (ly + lh) * CELL_SIZE, side: 'bottom' },
+                            priority: (yNearMiddleRoad(iy + ih) ? 1 : 2)
+                        });
+                    }
                 }
-                if (ix + iw < GRID_COLS && initialRoadGrid[y][ix + iw] >= 1) {
-                    return {
-                        roadCoord: { x: ix + iw, y: y, dir: 2 },
-                        edgePos: { x: (lx + lw) * CELL_SIZE, y: (ly + lh / 2) * CELL_SIZE, side: 'right' }
-                    };
+            }
+
+            // 3. CEK SISI BARAT (KIRI)
+            if (ix - 1 >= 0) {
+                for (let y = iy; y < iy + ih && y < GRID_ROWS; y++) {
+                    if (initialRoadGrid[y][ix - 1] >= 1) {
+                        candidates.push({
+                            roadCoord: { x: ix - 1, y: y, dir: 0 },
+                            edgePos: { x: lx * CELL_SIZE, y: (ly + lh / 2) * CELL_SIZE, side: 'left' },
+                            priority: (xNearMainRoad(ix - 1) ? 1 : 2)
+                        });
+                    }
                 }
+            }
+
+            // 4. CEK SISI TIMUR (KANAN)
+            if (ix + iw < GRID_COLS) {
+                for (let y = iy; y < iy + ih && y < GRID_ROWS; y++) {
+                    if (initialRoadGrid[y][ix + iw] >= 1) {
+                        candidates.push({
+                            roadCoord: { x: ix + iw, y: y, dir: 2 },
+                            edgePos: { x: (lx + lw) * CELL_SIZE, y: (ly + lh / 2) * CELL_SIZE, side: 'right' },
+                            priority: (xNearMainRoad(ix + iw) ? 1 : 2)
+                        });
+                    }
+                }
+            }
+
+            // Urutkan candidate berdasarkan prioritas keterjangkauan jalan utama
+            if (candidates.length > 0) {
+                candidates.sort((a, b) => a.priority - b.priority);
+                return candidates[0];
             }
 
             return {
@@ -725,6 +756,9 @@
                 edgePos: { x: lx * CELL_SIZE, y: ly * CELL_SIZE, side: 'top' }
             };
         }
+
+        function yNearMiddleRoad(y) { return y === 0 || y === 7 || y === 13; }
+        function xNearMainRoad(x) { return x === 0 || x === 8 || x === 16 || x === 23; }
 
         function layoutTreeClusters() {
             activeTreeClusters = [];
