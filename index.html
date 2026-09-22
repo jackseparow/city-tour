@@ -432,27 +432,34 @@
         const availableSlots = [
             // Blok 1 (Barat-Atas)
             { x: 1.3, y: 1.3 }, { x: 4.6, y: 1.3 }, { x: 1.3, y: 4.3 },
-            // Blok 2 (Tengah-Atas: Digeser jauh ke atas dari Row 6 Alun-Alun)
+            // Blok 2 (Tengah-Atas)
             { x: 9.3, y: 1.3 }, { x: 12.8, y: 1.3 }, { x: 9.3, y: 4.1 },
             // Blok 3 (Timur-Atas)
             { x: 17.3, y: 1.3 }, { x: 20.4, y: 1.3 }, { x: 17.3, y: 4.3 },
             // Blok 4 (Barat-Bawah)
             { x: 1.3, y: 8.3 }, { x: 4.6, y: 8.3 }, { x: 1.3, y: 11.3 },
-            // Blok 5 (Tengah-Bawah: Digeser jauh ke bawah dari Row 8 Alun-Alun)
+            // Blok 5 (Tengah-Bawah)
             { x: 9.3, y: 9.1 }, { x: 12.8, y: 9.1 },
             // Blok 6 (Timur-Bawah)
             { x: 17.3, y: 8.3 }, { x: 20.4, y: 8.3 }
         ];
 
-        // LARGE TOP-DOWN TREES (POSITONED STRICTLY ON PARKS/PARCELS, NEVER ON ROADS)
+        // TOP-DOWN DECORATIVE TREES (STACKED CANOPY & STAR PALMS)
         const decorativeTrees = [
             // Alun-Alun Central Fountain Park
-            { x: 12.15, y: 7.15, r: 14 }, { x: 12.85, y: 7.15, r: 14 }, { x: 12.15, y: 7.85, r: 14 }, { x: 12.85, y: 7.85, r: 14 },
+            { x: 12.15, y: 7.15, r: 16, type: 'stacked' }, 
+            { x: 12.85, y: 7.15, r: 16, type: 'stacked' }, 
+            { x: 12.15, y: 7.85, r: 14, type: 'palm' }, 
+            { x: 12.85, y: 7.85, r: 14, type: 'palm' },
             // Green Buffer Belts (Corner Grasslands)
-            { x: 4.8, y: 4.4, r: 16 }, { x: 5.6, y: 4.5, r: 13 },
-            { x: 20.2, y: 4.4, r: 16 }, { x: 21.0, y: 4.5, r: 13 },
-            { x: 4.8, y: 11.4, r: 16 }, { x: 5.6, y: 11.5, r: 13 },
-            { x: 20.2, y: 11.4, r: 16 }, { x: 21.0, y: 11.5, r: 13 }
+            { x: 4.8, y: 4.4, r: 18, type: 'stacked' }, 
+            { x: 5.6, y: 4.5, r: 14, type: 'palm' },
+            { x: 20.2, y: 4.4, r: 18, type: 'stacked' }, 
+            { x: 21.0, y: 4.5, r: 14, type: 'palm' },
+            { x: 4.8, y: 11.4, r: 18, type: 'stacked' }, 
+            { x: 5.6, y: 11.5, r: 14, type: 'palm' },
+            { x: 20.2, y: 11.4, r: 18, type: 'stacked' }, 
+            { x: 21.0, y: 11.5, r: 14, type: 'palm' }
         ];
 
         let landmarks = [];
@@ -720,12 +727,16 @@
             // Alun-Alun Fountain
             ctx.fillStyle = '#38bdf8';
             ctx.beginPath();
-            ctx.arc(parkX + CELL_SIZE / 2, parkY + CELL_SIZE / 2, CELL_SIZE * 0.3, 0, Math.PI * 2);
+            ctx.arc(parkX + CELL_SIZE / 2, parkY + CELL_SIZE / 2, CELL_SIZE * 0.28, 0, Math.PI * 2);
             ctx.fill();
 
-            // 4. DRAW LARGE TOP-DOWN TREES
+            // 4. DRAW DECORATIVE TREES (STACKED & PALMS)
             decorativeTrees.forEach(t => {
-                drawTopDownTree(ctx, t.x * CELL_SIZE, t.y * CELL_SIZE, t.r);
+                if (t.type === 'palm') {
+                    drawPalmTree(ctx, t.x * CELL_SIZE, t.y * CELL_SIZE, t.r);
+                } else {
+                    drawStackedTree(ctx, t.x * CELL_SIZE, t.y * CELL_SIZE, t.r);
+                }
             });
 
             // 5. DRAW LANDMARKS / BUILDINGS
@@ -765,20 +776,54 @@
             drawPlayerSiyo(ctx);
         }
 
-        // TOP-DOWN TREE DRAWING HELPER
-        function drawTopDownTree(ctx, x, y, r) {
-            // Shadow
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        // DRAW MULTI-LAYERED STACKED CANOPY TREE
+        function drawStackedTree(ctx, x, y, r) {
+            // Soft Drop Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
             ctx.beginPath(); ctx.arc(x + 4, y + 4, r, 0, Math.PI * 2); ctx.fill();
-            // Outer foliage
+
+            // Bottom Large Canopy (Dark Green)
             ctx.fillStyle = '#14532d';
             ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-            // Inner crown
-            ctx.fillStyle = '#22c55e';
-            ctx.beginPath(); ctx.arc(x - r * 0.2, y - r * 0.2, r * 0.65, 0, Math.PI * 2); ctx.fill();
-            // Center highlight
-            ctx.fillStyle = '#86efac';
-            ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.3, 0, Math.PI * 2); ctx.fill();
+
+            // Middle Medium Canopy (Vibrant Green)
+            ctx.fillStyle = '#16a34a';
+            ctx.beginPath(); ctx.arc(x - r * 0.15, y - r * 0.15, r * 0.7, 0, Math.PI * 2); ctx.fill();
+
+            // Top Small Canopy (Bright Light Green)
+            ctx.fillStyle = '#4ade80';
+            ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.4, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // DRAW STAR-SHAPED PALM TREE TOP-DOWN
+        function drawPalmTree(ctx, x, y, r) {
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            ctx.beginPath(); ctx.arc(x + 3, y + 3, r * 0.8, 0, Math.PI * 2); ctx.fill();
+
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Center Trunk top
+            ctx.fillStyle = '#78350f';
+            ctx.beginPath(); ctx.arc(0, 0, r * 0.25, 0, Math.PI * 2); ctx.fill();
+
+            // 8 Star-shaped Palm Fronds
+            ctx.fillStyle = '#15803d';
+            for (let i = 0; i < 8; i++) {
+                ctx.rotate(Math.PI / 4);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(r * 0.4, -r * 0.2, r, 0);
+                ctx.quadraticCurveTo(r * 0.4, r * 0.2, 0, 0);
+                ctx.fill();
+            }
+
+            // Bright Center Highlight
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath(); ctx.arc(0, 0, r * 0.12, 0, Math.PI * 2); ctx.fill();
+
+            ctx.restore();
         }
 
         // COMPASS ROSE HELPER
@@ -826,8 +871,30 @@
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill();
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = 2; ctx.stroke();
 
-            // Roof Architecture Details
-            if (lm.id === 'stadion') {
+            // Custom Architecture Details
+            if (lm.id === 'hutan') {
+                // HUTAN KOTA & CAMPING GROUND: EXTRA RIMBUN WITH TREES & CAMPSITE
+                ctx.fillStyle = '#166534';
+                ctx.fillRect(x + 4, y + 4, w - 8, h - 8);
+
+                // Dense stacked trees and palms inside forest
+                drawStackedTree(ctx, x + 16, y + 16, 12);
+                drawStackedTree(ctx, x + w - 16, y + 16, 12);
+                drawPalmTree(ctx, x + w / 2, y + 18, 11);
+                drawStackedTree(ctx, x + 18, y + h - 18, 12);
+
+                // Tents
+                ctx.fillStyle = '#f97316';
+                ctx.beginPath(); 
+                ctx.moveTo(x + w - 24, y + h - 22); 
+                ctx.lineTo(x + w - 32, y + h - 8); 
+                ctx.lineTo(x + w - 16, y + h - 8); 
+                ctx.fill();
+
+                // Campfire
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath(); ctx.arc(x + w/2, y + h/2 + 6, 4, 0, Math.PI * 2); ctx.fill();
+            } else if (lm.id === 'stadion') {
                 ctx.fillStyle = '#4ade80';
                 ctx.fillRect(x + 8, y + 6, w - 16, h - 12);
                 ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 8, y + 6, w - 16, h - 12);
