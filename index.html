@@ -359,9 +359,7 @@
             <block type="move_cardinal"></block>
         </category>
         <category name="Pengulangan" colour="#10b981">
-            <block type="repeat_x_times">
-                <field name="TIMES">2</field>
-            </block>
+            <block type="repeat_x_times"></block>
         </category>
     </xml>
 
@@ -533,12 +531,23 @@
         siyoImg.src = 'maskot-siyo.png';
         siyoImg.onload = () => { renderMap(); };
 
-        // TONE.JS AUDIO SYNTHESIZER
-        const synth = new Tone.Synth().toDestination();
+        // TONE.JS AUDIO SYNTHESIZER (LAZY LOADED ON USER GESTURE)
+        let synth = null;
+
+        function initAudio() {
+            if (!synth && window.Tone) {
+                try {
+                    Tone.start();
+                    synth = new Tone.Synth().toDestination();
+                } catch(e) {}
+            }
+        }
 
         function playSound(type) {
+            initAudio();
+            if (!synth) return;
             try {
-                if (Tone.context.state !== 'running') Tone.start();
+                if (Tone.context.state !== 'running') Tone.context.resume();
                 if (type === 'step') synth.triggerAttackRelease("C5", "8n");
                 else if (type === 'turn') synth.triggerAttackRelease("E5", "8n");
                 else if (type === 'win') {
@@ -554,24 +563,25 @@
         // INITIALIZE APP
         window.onload = function() {
             initRoadNetwork();
+            layoutLandmarks();
+            layoutTreeClusters();
             initCustomBlocks();
             initBlockly();
             populateMissionDropdown();
-            layoutLandmarks();
-            layoutTreeClusters();
             resetPlayerToMissionStart();
             renderMap();
         };
 
-        // DEKLARASI BLOK BLOCKLY DENGAN PERBAIKAN TOTAL
+        // DEKLARASI BLOK BLOCKLY DENGAN PERBAIKAN VERSION-COMPATIBILITY
         function initCustomBlocks() {
+            const FieldNumberClass = Blockly.FieldNumber || Blockly.FieldFieldNumber;
+
             Blockly.Blocks['move_forward'] = {
                 init: function() {
                     this.appendDummyInput().appendField("Maju 1 Langkah");
                     this.setPreviousStatement(true, null);
                     this.setNextStatement(true, null);
                     this.setColour(210);
-                    this.setTooltip("Memindahkan Si Yo maju 1 petak ke depan");
                 }
             };
 
@@ -581,7 +591,6 @@
                     this.setPreviousStatement(true, null);
                     this.setNextStatement(true, null);
                     this.setColour(210);
-                    this.setTooltip("Memutar arah Si Yo ke kiri");
                 }
             };
 
@@ -591,7 +600,6 @@
                     this.setPreviousStatement(true, null);
                     this.setNextStatement(true, null);
                     this.setColour(210);
-                    this.setTooltip("Memutar arah Si Yo ke kanan");
                 }
             };
 
@@ -608,7 +616,6 @@
                     this.setPreviousStatement(true, null);
                     this.setNextStatement(true, null);
                     this.setColour(210);
-                    this.setTooltip("Maju sesuai dengan mata angin");
                 }
             };
 
@@ -616,13 +623,12 @@
                 init: function() {
                     this.appendDummyInput()
                         .appendField("Ulangi")
-                        .appendField(new Blockly.FieldFieldNumber(2, 1, 10), "TIMES")
+                        .appendField(new FieldNumberClass(2, 1, 10), "TIMES")
                         .appendField("kali");
                     this.appendStatementInput("DO").appendField("kerjakan");
                     this.setPreviousStatement(true, null);
                     this.setNextStatement(true, null);
                     this.setColour(120);
-                    this.setTooltip("Mengulangi blok di dalamnya");
                 }
             };
         }
@@ -633,14 +639,12 @@
                 toolbox: toolboxXml,
                 scrollbars: true,
                 trashcan: true,
-                zoom: { controls: true, wheel: true, startScale: 0.85 },
-                grid: { spacing: 20, length: 3, colour: '#ccc', snap: true }
+                zoom: { controls: true, wheel: true, startScale: 0.85 }
             });
 
-            // Resizing handler
             setTimeout(() => {
-                Blockly.svgResize(blocklyWorkspace);
-            }, 200);
+                if (blocklyWorkspace) Blockly.svgResize(blocklyWorkspace);
+            }, 150);
         }
 
         function populateMissionDropdown() {
@@ -695,6 +699,7 @@
         }
 
         function shuffleLandmarks() {
+            initAudio();
             if (isExecuting) return;
             layoutLandmarks();
             layoutTreeClusters();
@@ -719,6 +724,7 @@
         }
 
         function findAdjacentRoad(lx, ly, lw, lh) {
+            if (!initialRoadGrid || initialRoadGrid.length === 0) return { x: 0, y: 0, dir: 0 };
             const ix = Math.floor(lx);
             const iy = Math.floor(ly);
             const iw = Math.ceil(lw);
@@ -736,11 +742,13 @@
         }
 
         function changeMission() {
+            initAudio();
             currentMissionIndex = parseInt(document.getElementById('missionSelect').value);
             resetGame();
         }
 
         function resetGame() {
+            initAudio();
             isExecuting = false;
             resetPlayerToMissionStart();
             renderMap();
@@ -749,7 +757,11 @@
         // REALISTIC MAP CANVAS RENDERER
         function renderMap() {
             const canvas = document.getElementById('cityCanvas');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
+
+            // SAFEGUARDING ARRAY READS
+            if (!initialRoadGrid || initialRoadGrid.length < GRID_ROWS) return;
 
             // 1. CLEAR & LUSH GREEN LANDSCAPING BASE
             ctx.fillStyle = '#276738';
@@ -762,29 +774,29 @@
                 }
             }
 
-            // 2. DRAW ROADS (CHARCOAL ASPHALT WITH SOLID WHITE EDGE MARKS)
+            // 2. DRAW ROADS
             ctx.fillStyle = '#1e293b';
 
             for (let r = 0; r < GRID_ROWS; r++) {
                 for (let c = 0; c < GRID_COLS; c++) {
-                    if (initialRoadGrid[r][c] >= 1) {
+                    if (initialRoadGrid[r] && initialRoadGrid[r][c] >= 1) {
                         ctx.fillRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
                     }
                 }
             }
 
-            // Draw Solid White Road Border Lines
+            // Solid White Road Lines
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 3.5;
             ctx.beginPath();
             for (let r = 0; r < GRID_ROWS; r++) {
                 for (let c = 0; c < GRID_COLS; c++) {
-                    if (initialRoadGrid[r][c] >= 1) {
+                    if (initialRoadGrid[r] && initialRoadGrid[r][c] >= 1) {
                         const x = c * CELL_SIZE;
                         const y = r * CELL_SIZE;
 
-                        if (r === 0 || initialRoadGrid[r - 1][c] === 0) { ctx.moveTo(x, y); ctx.lineTo(x + CELL_SIZE, y); }
-                        if (r === GRID_ROWS - 1 || initialRoadGrid[r + 1][c] === 0) { ctx.moveTo(x, y + CELL_SIZE); ctx.lineTo(x + CELL_SIZE, y + CELL_SIZE); }
+                        if (r === 0 || (initialRoadGrid[r - 1] && initialRoadGrid[r - 1][c] === 0)) { ctx.moveTo(x, y); ctx.lineTo(x + CELL_SIZE, y); }
+                        if (r === GRID_ROWS - 1 || (initialRoadGrid[r + 1] && initialRoadGrid[r + 1][c] === 0)) { ctx.moveTo(x, y + CELL_SIZE); ctx.lineTo(x + CELL_SIZE, y + CELL_SIZE); }
                         if (c === 0 || initialRoadGrid[r][c - 1] === 0) { ctx.moveTo(x, y); ctx.lineTo(x, y + CELL_SIZE); }
                         if (c === GRID_COLS - 1 || initialRoadGrid[r][c + 1] === 0) { ctx.moveTo(x + CELL_SIZE, y); ctx.lineTo(x + CELL_SIZE, y + CELL_SIZE); }
                     }
@@ -808,7 +820,7 @@
             ctx.arc(parkX + CELL_SIZE / 2, parkY + CELL_SIZE / 2, CELL_SIZE * 0.28, 0, Math.PI * 2);
             ctx.fill();
 
-            // 4. DRAW GIANT DYNAMIC TREE CLUSTERS IN OPEN SPACES
+            // 4. DRAW DYNAMIC TREE CLUSTERS
             activeTreeClusters.forEach(tc => {
                 drawCustomTreeCombo(ctx, tc.x * CELL_SIZE, tc.y * CELL_SIZE, tc.combo);
             });
@@ -820,7 +832,7 @@
 
             // Highlight Target Landmark
             const currentMission = missions[currentMissionIndex];
-            if (currentMission.target !== 'roundabout') {
+            if (currentMission && currentMission.target !== 'roundabout') {
                 const targetLm = landmarks.find(l => l.id === currentMission.target);
                 if (targetLm) {
                     ctx.strokeStyle = '#ef4444';
@@ -846,11 +858,11 @@
             // 7. DRAW COMPASS ROSE
             drawCompassRose(ctx, CANVAS_WIDTH - 65, 65);
 
-            // 8. DRAW PLAYER CHARACTER (PROPORSIONAL MASKOT SI YO)
+            // 8. DRAW PLAYER CHARACTER
             drawPlayerSiyo(ctx);
         }
 
-        // 2X LARGER CANOPY COMBINATIONS
+        // MULTI-LAYER CANOPY COMBINATIONS
         function drawCustomTreeCombo(ctx, x, y, combo) {
             if (combo === '3_layers') {
                 drawTreeCanopyLayer(ctx, x, y, 32, '#14532d', true);
@@ -945,7 +957,6 @@
             const h = lm.size[1] * CELL_SIZE;
 
             if (lm.id === 'hutan') {
-                // HUTAN KOTA & CAMPING GROUND: VEGETASI ALAMI TANPA GEDUNG
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
                 ctx.beginPath(); ctx.roundRect(x + 2, y + 2, w - 4, h - 4, 12); ctx.fill();
 
@@ -966,7 +977,6 @@
                 ctx.fillStyle = '#ef4444';
                 ctx.beginPath(); ctx.arc(x + w/2 + 10, y + h/2 + 8, 5, 0, Math.PI * 2); ctx.fill();
             } else {
-                // LANDMARK BUILDING STANDARD
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
                 ctx.fillRect(x + 4, y + 4, w, h);
 
@@ -1035,6 +1045,7 @@
 
         // EXECUTE BLOCKLY CODE
         async function runCode() {
+            initAudio();
             if (isExecuting) return;
             isExecuting = true;
 
@@ -1104,7 +1115,7 @@
                 const nx = playerState.x + dx;
                 const ny = playerState.y + dy;
 
-                if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS && initialRoadGrid[ny][nx] >= 1) {
+                if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS && initialRoadGrid[ny] && initialRoadGrid[ny][nx] >= 1) {
                     playerState.x = nx;
                     playerState.y = ny;
                     playSound('step');
@@ -1135,7 +1146,7 @@
                 const nx = playerState.x + dx;
                 const ny = playerState.y + dy;
 
-                if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS && initialRoadGrid[ny][nx] >= 1) {
+                if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS && initialRoadGrid[ny] && initialRoadGrid[ny][nx] >= 1) {
                     playerState.x = nx;
                     playerState.y = ny;
                     playSound('step');
@@ -1151,7 +1162,7 @@
             const currentMission = missions[currentMissionIndex];
 
             if (currentMission.target === 'roundabout') {
-                if (initialRoadGrid[playerState.y][playerState.x] === 2) {
+                if (initialRoadGrid[playerState.y] && initialRoadGrid[playerState.y][playerState.x] === 2) {
                     playSound('win');
                     showToast("Hore! Selamat, Si Yo berhasil sampai di Jalan Lingkar Alun-Alun!", "success");
                     return;
