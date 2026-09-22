@@ -376,7 +376,7 @@
         function initRoadNetwork() {
             initialRoadGrid = Array(GRID_ROWS).fill(0).map(() => Array(GRID_COLS).fill(0));
 
-            // 1. OUTER RING ROAD (Outer Perimeter)
+            // 1. OUTER RING ROAD
             for (let c = 0; c < GRID_COLS; c++) {
                 initialRoadGrid[0][c] = 1;               // North Ring
                 initialRoadGrid[GRID_ROWS - 1][c] = 1;   // South Ring
@@ -397,7 +397,7 @@
                 initialRoadGrid[r][16] = 1;
             }
 
-            // 4. JALAN MENGELILINGI ALUN-ALUN PUSAT KOTA (Square Loop Road around Alun-Alun: Cols 11-13, Rows 6-8)
+            // 4. JALAN MENGELILINGI ALUN-ALUN PUSAT KOTA (Cols 11-13, Rows 6-8)
             for (let c = 11; c <= 13; c++) {
                 initialRoadGrid[6][c] = 2;
                 initialRoadGrid[8][c] = 2;
@@ -411,51 +411,48 @@
         // 16 LANDMARKS DEFINITIONS
         const landmarkDefinitions = [
             { id: 'siyo', name: 'Rumah Si Yo', size: [2, 1.4], color: '#f59e0b', cat: 'res' },
-            { id: 'sekolah', name: 'Sekolah', size: [2.8, 1.4], color: '#3b82f6', cat: 'edu' },
-            { id: 'stasiun', name: 'Stasiun Kereta & Bus', size: [2.8, 1.4], color: '#6366f1', cat: 'trans' },
-            { id: 'rs', name: 'Rumah Sakit', size: [2.8, 1.4], color: '#ef4444', cat: 'health' },
+            { id: 'sekolah', name: 'Sekolah', size: [2.6, 1.4], color: '#3b82f6', cat: 'edu' },
+            { id: 'stasiun', name: 'Stasiun Kereta & Bus', size: [2.6, 1.4], color: '#6366f1', cat: 'trans' },
+            { id: 'rs', name: 'Rumah Sakit', size: [2.6, 1.4], color: '#ef4444', cat: 'health' },
             { id: 'apotek', name: 'Apotek', size: [2, 1.4], color: '#10b981', cat: 'health' },
-            { id: 'pasar', name: 'Pasar Tradisional', size: [2.8, 1.4], color: '#d97706', cat: 'comm' },
-            { id: 'kolam', name: 'Kolam Renang', size: [2.8, 1.4], color: '#06b6d4', cat: 'sport' },
-            { id: 'stadion', name: 'Stadion Utama', size: [2.8, 1.5], color: '#84cc16', cat: 'sport' },
+            { id: 'pasar', name: 'Pasar Tradisional', size: [2.6, 1.4], color: '#d97706', cat: 'comm' },
+            { id: 'kolam', name: 'Kolam Renang', size: [2.6, 1.4], color: '#06b6d4', cat: 'sport' },
+            { id: 'stadion', name: 'Stadion Utama', size: [2.6, 1.4], color: '#84cc16', cat: 'sport' },
             { id: 'polisi', name: 'Kantor Polisi', size: [2, 1.4], color: '#1e40af', cat: 'gov' },
             { id: 'tokobuku', name: 'Toko Buku', size: [2, 1.4], color: '#8b5cf6', cat: 'comm' },
-            { id: 'museum', name: 'Museum Kota', size: [2.8, 1.4], color: '#b45309', cat: 'cult' },
-            { id: 'teater', name: 'Gedung Teater', size: [2.8, 1.4], color: '#ec4899', cat: 'cult' },
-            { id: 'hutan', name: 'Hutan Kota & Camping', size: [2.8, 1.5], color: '#15803d', cat: 'nature' },
+            { id: 'museum', name: 'Museum Kota', size: [2.6, 1.4], color: '#b45309', cat: 'cult' },
+            { id: 'teater', name: 'Gedung Teater', size: [2.6, 1.4], color: '#ec4899', cat: 'cult' },
+            { id: 'hutan', name: 'Hutan Kota & Camping', size: [2.6, 1.4], color: '#15803d', cat: 'nature' },
             { id: 'damkar', name: 'Pemadam Kebakaran', size: [2.5, 1.4], color: '#dc2626', cat: 'gov' },
             { id: 'kelontong', name: 'Toko Kelontong', size: [2, 1.4], color: '#059669', cat: 'comm' },
-            { id: 'walikota', name: 'Kantor Walikota', size: [2.8, 1.5], color: '#475569', cat: 'gov' }
+            { id: 'walikota', name: 'Kantor Walikota', size: [2.6, 1.4], color: '#475569', cat: 'gov' }
         ];
 
-        // 16 STRICT SLOTS GUARANTEED NON-OVERLAPPING WITH ROADS
+        // 16 STRICT SLOTS GUARANTEED ABSOLUTELY FREE FROM ROADS & ROUNDABOUT
         const availableSlots = [
             // Blok 1 (Barat-Atas)
-            { x: 1.3, y: 1.3 }, { x: 4.6, y: 1.3 }, { x: 1.3, y: 4.2 },
-            // Blok 2 (Tengah-Atas: Dijauhkan dari lingkar alun-alun)
-            { x: 9.3, y: 1.3 }, { x: 12.8, y: 1.3 }, { x: 9.3, y: 4.2 },
+            { x: 1.3, y: 1.3 }, { x: 4.6, y: 1.3 }, { x: 1.3, y: 4.3 },
+            // Blok 2 (Tengah-Atas: Digeser jauh ke atas dari Row 6 Alun-Alun)
+            { x: 9.3, y: 1.3 }, { x: 12.8, y: 1.3 }, { x: 9.3, y: 4.1 },
             // Blok 3 (Timur-Atas)
-            { x: 17.3, y: 1.3 }, { x: 20.4, y: 1.3 }, { x: 17.3, y: 4.2 },
+            { x: 17.3, y: 1.3 }, { x: 20.4, y: 1.3 }, { x: 17.3, y: 4.3 },
             // Blok 4 (Barat-Bawah)
-            { x: 1.3, y: 8.3 }, { x: 4.6, y: 8.3 }, { x: 1.3, y: 11.2 },
-            // Blok 5 (Tengah-Bawah)
-            { x: 9.3, y: 8.3 }, { x: 12.8, y: 8.3 },
+            { x: 1.3, y: 8.3 }, { x: 4.6, y: 8.3 }, { x: 1.3, y: 11.3 },
+            // Blok 5 (Tengah-Bawah: Digeser jauh ke bawah dari Row 8 Alun-Alun)
+            { x: 9.3, y: 9.1 }, { x: 12.8, y: 9.1 },
             // Blok 6 (Timur-Bawah)
             { x: 17.3, y: 8.3 }, { x: 20.4, y: 8.3 }
         ];
 
-        // PRE-CALCULATED TOP-DOWN DECORATIVE TREES
+        // LARGE TOP-DOWN TREES (POSITONED STRICTLY ON PARKS/PARCELS, NEVER ON ROADS)
         const decorativeTrees = [
-            // Alun-Alun Fountain Park Trees
-            { x: 12.2, y: 6.8, r: 8 }, { x: 12.8, y: 6.8, r: 9 }, { x: 12.2, y: 7.8, r: 8 }, { x: 12.8, y: 7.8, r: 9 },
-            // Corner Trees around intersections
-            { x: 7.3, y: 0.7, r: 10 }, { x: 8.7, y: 0.7, r: 10 }, { x: 15.3, y: 0.7, r: 10 }, { x: 16.7, y: 0.7, r: 10 },
-            { x: 0.7, y: 6.3, r: 9 }, { x: 0.7, y: 7.7, r: 9 }, { x: 23.3, y: 6.3, r: 9 }, { x: 23.3, y: 7.7, r: 9 },
-            { x: 7.3, y: 6.3, r: 11 }, { x: 8.7, y: 6.3, r: 11 }, { x: 15.3, y: 6.3, r: 11 }, { x: 16.7, y: 6.3, r: 11 },
-            { x: 7.3, y: 7.7, r: 11 }, { x: 8.7, y: 7.7, r: 11 }, { x: 15.3, y: 7.7, r: 11 }, { x: 16.7, y: 7.7, r: 11 },
-            // Open Space Green Belts
-            { x: 4.5, y: 4.3, r: 10 }, { x: 5.2, y: 4.5, r: 8 }, { x: 20.2, y: 4.3, r: 10 }, { x: 20.8, y: 4.5, r: 8 },
-            { x: 4.5, y: 11.3, r: 10 }, { x: 5.2, y: 11.5, r: 8 }, { x: 20.2, y: 11.3, r: 10 }, { x: 20.8, y: 11.5, r: 8 }
+            // Alun-Alun Central Fountain Park
+            { x: 12.15, y: 7.15, r: 14 }, { x: 12.85, y: 7.15, r: 14 }, { x: 12.15, y: 7.85, r: 14 }, { x: 12.85, y: 7.85, r: 14 },
+            // Green Buffer Belts (Corner Grasslands)
+            { x: 4.8, y: 4.4, r: 16 }, { x: 5.6, y: 4.5, r: 13 },
+            { x: 20.2, y: 4.4, r: 16 }, { x: 21.0, y: 4.5, r: 13 },
+            { x: 4.8, y: 11.4, r: 16 }, { x: 5.6, y: 11.5, r: 13 },
+            { x: 20.2, y: 11.4, r: 16 }, { x: 21.0, y: 11.5, r: 13 }
         ];
 
         let landmarks = [];
@@ -710,7 +707,7 @@
             }
             ctx.stroke();
 
-            // 3. DRAW ALUN-ALUN PUSAT KOTA (Center Park inside loop)
+            // 3. DRAW ALUN-ALUN PUSAT KOTA PARK
             const parkX = 12 * CELL_SIZE;
             const parkY = 7 * CELL_SIZE;
             
@@ -723,10 +720,10 @@
             // Alun-Alun Fountain
             ctx.fillStyle = '#38bdf8';
             ctx.beginPath();
-            ctx.arc(parkX + CELL_SIZE / 2, parkY + CELL_SIZE / 2, CELL_SIZE * 0.35, 0, Math.PI * 2);
+            ctx.arc(parkX + CELL_SIZE / 2, parkY + CELL_SIZE / 2, CELL_SIZE * 0.3, 0, Math.PI * 2);
             ctx.fill();
 
-            // 4. DRAW DECORATIVE TOP-DOWN TREES
+            // 4. DRAW LARGE TOP-DOWN TREES
             decorativeTrees.forEach(t => {
                 drawTopDownTree(ctx, t.x * CELL_SIZE, t.y * CELL_SIZE, t.r);
             });
@@ -761,7 +758,7 @@
             }
             ctx.setLineDash([]);
 
-            // 7. DRAW COMPASS ROSE (ARAH MATA ANGIN: UTARA ATAS, SELATAN BAWAH)
+            // 7. DRAW COMPASS ROSE
             drawCompassRose(ctx, CANVAS_WIDTH - 65, 65);
 
             // 8. DRAW PLAYER CHARACTER (PROPORSIONAL MASKOT SI YO)
@@ -772,13 +769,16 @@
         function drawTopDownTree(ctx, x, y, r) {
             // Shadow
             ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-            ctx.beginPath(); ctx.arc(x + 3, y + 3, r, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x + 4, y + 4, r, 0, Math.PI * 2); ctx.fill();
             // Outer foliage
-            ctx.fillStyle = '#166534';
+            ctx.fillStyle = '#14532d';
             ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
             // Inner crown
             ctx.fillStyle = '#22c55e';
-            ctx.beginPath(); ctx.arc(x - r * 0.2, y - r * 0.2, r * 0.6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x - r * 0.2, y - r * 0.2, r * 0.65, 0, Math.PI * 2); ctx.fill();
+            // Center highlight
+            ctx.fillStyle = '#86efac';
+            ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.3, 0, Math.PI * 2); ctx.fill();
         }
 
         // COMPASS ROSE HELPER
@@ -786,31 +786,27 @@
             ctx.save();
             ctx.translate(cx, cy);
 
-            // Compass Dial Plate
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
             ctx.beginPath(); ctx.arc(0, 0, 38, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.stroke();
 
-            // North Pointer Arrow (Red)
             ctx.fillStyle = '#ef4444';
             ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(-8, 0); ctx.lineTo(0, -4); ctx.fill();
             ctx.fillStyle = '#dc2626';
             ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(8, 0); ctx.lineTo(0, -4); ctx.fill();
 
-            // South Pointer Arrow (White)
             ctx.fillStyle = '#cbd5e1';
             ctx.beginPath(); ctx.moveTo(0, 30); ctx.lineTo(-8, 0); ctx.lineTo(0, 4); ctx.fill();
             ctx.fillStyle = '#94a3b8';
             ctx.beginPath(); ctx.moveTo(0, 30); ctx.lineTo(8, 0); ctx.lineTo(0, 4); ctx.fill();
 
-            // Cardinal Letters (U, S, T, B)
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 12px Nunito';
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('U', 0, -20);  // Utara (Top)
-            ctx.fillText('S', 0, 20);   // Selatan (Bottom)
-            ctx.fillText('T', 20, 0);   // Timur (Right)
-            ctx.fillText('B', -20, 0);  // Barat (Left)
+            ctx.fillText('U', 0, -20);
+            ctx.fillText('S', 0, 20);
+            ctx.fillText('T', 20, 0);
+            ctx.fillText('B', -20, 0);
 
             ctx.restore();
         }
