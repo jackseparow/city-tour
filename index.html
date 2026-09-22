@@ -200,6 +200,7 @@
             flex: 1;
             width: 100%;
             min-height: 240px;
+            position: relative;
         }
 
         .instruction-card {
@@ -351,14 +352,16 @@
 
     <!-- BLOCKLY TOOLBOX XML CONFIG -->
     <xml id="toolbox" style="display: none">
-        <category name="Gerak" colour="#3b82f6">
+        <category name="Gerak" colour="#2563eb">
             <block type="move_forward"></block>
             <block type="turn_left"></block>
             <block type="turn_right"></block>
             <block type="move_cardinal"></block>
         </category>
         <category name="Pengulangan" colour="#10b981">
-            <block type="repeat_x_times"></block>
+            <block type="repeat_x_times">
+                <field name="TIMES">2</field>
+            </block>
         </category>
     </xml>
 
@@ -444,66 +447,57 @@
             { x: 17.3, y: 8.3 }, { x: 20.4, y: 8.3 }
         ];
 
-        // DENSE TREE CLUSTERS FOR EMPTY OPEN GREEN SPACES (2X LARGER CANOPIES)
+        // DENSE TREE CLUSTERS FOR EMPTY OPEN GREEN SPACES
         const treeClusterSlots = [
-            // Cluster 1: Taman Alun-Alun Pusat
             [
                 { dx: 0.2, dy: 0.2, combo: '3_layers' },
                 { dx: 0.8, dy: 0.2, combo: '2_large_small' },
                 { dx: 0.2, dy: 0.8, combo: '2_large_tiny' },
                 { dx: 0.8, dy: 0.8, combo: 'palm' }
             ],
-            // Cluster 2: Ruang Hijau Barat Laut
             [
                 { dx: 0, dy: 0, combo: '3_layers' },
                 { dx: 0.8, dy: 0.1, combo: '2_large_small' },
                 { dx: 0.2, dy: 0.8, combo: 'palm' }
             ],
-            // Cluster 3: Ruang Hijau Timur Laut
             [
                 { dx: 0, dy: 0, combo: '2_large_tiny' },
                 { dx: 0.8, dy: 0.1, combo: '3_layers' },
                 { dx: 0.4, dy: 0.8, combo: '2_small_tiny' }
             ],
-            // Cluster 4: Ruang Hijau Barat Daya
             [
                 { dx: 0, dy: 0, combo: '3_layers' },
                 { dx: 0.8, dy: 0.2, combo: 'palm' },
                 { dx: 0.3, dy: 0.8, combo: '2_large_small' }
             ],
-            // Cluster 5: Ruang Hijau Timur Daya
             [
                 { dx: 0, dy: 0, combo: '2_large_small' },
                 { dx: 0.8, dy: 0.2, combo: '3_layers' },
                 { dx: 0.2, dy: 0.8, combo: '2_large_tiny' }
             ],
-            // Cluster 6: Ruang Hijau Tengah-Atas
             [
                 { dx: 0, dy: 0, combo: '3_layers' },
                 { dx: 0.6, dy: 0.4, combo: 'palm' }
             ],
-            // Cluster 7: Ruang Hijau Tengah-Bawah
             [
                 { dx: 0, dy: 0, combo: '2_large_small' },
                 { dx: 0.6, dy: 0.4, combo: '3_layers' }
             ],
-            // Cluster 8: Taman Jalur Lingkar Kota
             [
                 { dx: 0, dy: 0, combo: 'palm' },
                 { dx: 0.7, dy: 0.1, combo: '2_large_tiny' }
             ]
         ];
 
-        // LOCATIONS FOR DENSE OPEN SPACE GREENERY
         const clusterLocations = [
-            { x: 12.0, y: 7.0 },  // Alun-Alun Center
-            { x: 4.8, y: 4.1 },   // Blok 1 Green Belt
-            { x: 20.2, y: 4.1 },  // Blok 3 Green Belt
-            { x: 4.8, y: 11.1 },  // Blok 4 Green Belt
-            { x: 20.2, y: 11.1 }, // Blok 6 Green Belt
-            { x: 12.8, y: 4.1 },  // Blok 2 Green Belt
-            { x: 12.8, y: 11.1 }, // Blok 5 Green Belt
-            { x: 9.3, y: 5.8 }    // Loop Buffer
+            { x: 12.0, y: 7.0 },
+            { x: 4.8, y: 4.1 },
+            { x: 20.2, y: 4.1 },
+            { x: 4.8, y: 11.1 },
+            { x: 20.2, y: 11.1 },
+            { x: 12.8, y: 4.1 },
+            { x: 12.8, y: 11.1 },
+            { x: 9.3, y: 5.8 }
         ];
 
         let activeTreeClusters = [];
@@ -560,6 +554,7 @@
         // INITIALIZE APP
         window.onload = function() {
             initRoadNetwork();
+            initCustomBlocks();
             initBlockly();
             populateMissionDropdown();
             layoutLandmarks();
@@ -567,6 +562,86 @@
             resetPlayerToMissionStart();
             renderMap();
         };
+
+        // DEKLARASI BLOK BLOCKLY DENGAN PERBAIKAN TOTAL
+        function initCustomBlocks() {
+            Blockly.Blocks['move_forward'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("Maju 1 Langkah");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(210);
+                    this.setTooltip("Memindahkan Si Yo maju 1 petak ke depan");
+                }
+            };
+
+            Blockly.Blocks['turn_left'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("Belok Kiri ↺");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(210);
+                    this.setTooltip("Memutar arah Si Yo ke kiri");
+                }
+            };
+
+            Blockly.Blocks['turn_right'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("Belok Kanan ↻");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(210);
+                    this.setTooltip("Memutar arah Si Yo ke kanan");
+                }
+            };
+
+            Blockly.Blocks['move_cardinal'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("Maju ke")
+                        .appendField(new Blockly.FieldDropdown([
+                            ["Utara ↑", "NORTH"],
+                            ["Timur →", "EAST"],
+                            ["Selatan ↓", "SOUTH"],
+                            ["Barat ←", "WEST"]
+                        ]), "DIR");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(210);
+                    this.setTooltip("Maju sesuai dengan mata angin");
+                }
+            };
+
+            Blockly.Blocks['repeat_x_times'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("Ulangi")
+                        .appendField(new Blockly.FieldFieldNumber(2, 1, 10), "TIMES")
+                        .appendField("kali");
+                    this.appendStatementInput("DO").appendField("kerjakan");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(120);
+                    this.setTooltip("Mengulangi blok di dalamnya");
+                }
+            };
+        }
+
+        function initBlockly() {
+            const toolboxXml = document.getElementById('toolbox');
+            blocklyWorkspace = Blockly.inject('blocklyDiv', {
+                toolbox: toolboxXml,
+                scrollbars: true,
+                trashcan: true,
+                zoom: { controls: true, wheel: true, startScale: 0.85 },
+                grid: { spacing: 20, length: 3, colour: '#ccc', snap: true }
+            });
+
+            // Resizing handler
+            setTimeout(() => {
+                Blockly.svgResize(blocklyWorkspace);
+            }, 200);
+        }
 
         function populateMissionDropdown() {
             const select = document.getElementById('missionSelect');
@@ -626,71 +701,6 @@
             resetPlayerToMissionStart();
             renderMap();
             showToast("Posisi landmark & vegetasi di kota berhasil diacak!", "info");
-        }
-
-        function initBlockly() {
-            Blockly.Blocks['move_forward'] = {
-                init: function() {
-                    this.appendDummyInput().appendField("Maju 1 Langkah");
-                    this.setPreviousStatement(true, null);
-                    this.setNextStatement(true, null);
-                    this.setColour(210);
-                }
-            };
-
-            Blockly.Blocks['turn_left'] = {
-                init: function() {
-                    this.appendDummyInput().appendField("Belok Kiri ↺");
-                    this.setPreviousStatement(true, null);
-                    this.setNextStatement(true, null);
-                    this.setColour(210);
-                }
-            };
-
-            Blockly.Blocks['turn_right'] = {
-                init: function() {
-                    this.appendDummyInput().appendField("Belok Kanan ↻");
-                    this.setPreviousStatement(true, null);
-                    this.setNextStatement(true, null);
-                    this.setColour(210);
-                }
-            };
-
-            Blockly.Blocks['move_cardinal'] = {
-                init: function() {
-                    this.appendDummyInput()
-                        .appendField("Maju ke")
-                        .appendField(new Blockly.FieldDropdown([
-                            ["Utara ↑", "NORTH"],
-                            ["Timur →", "EAST"],
-                            ["Selatan ↓", "SOUTH"],
-                            ["Barat ←", "WEST"]
-                        ]), "DIR");
-                    this.setPreviousStatement(true, null);
-                    this.setNextStatement(true, null);
-                    this.setColour(210);
-                }
-            };
-
-            Blockly.Blocks['repeat_x_times'] = {
-                init: function() {
-                    this.appendDummyInput()
-                        .appendField("Ulangi")
-                        .appendField(new Blockly.FieldFieldNumber(2, 1, 10), "TIMES")
-                        .appendField("kali");
-                    this.appendStatementInput("DO").appendField("kerjakan");
-                    this.setPreviousStatement(true, null);
-                    this.setNextStatement(true, null);
-                    this.setColour(120);
-                }
-            };
-
-            blocklyWorkspace = Blockly.inject('blocklyDiv', {
-                toolbox: document.getElementById('toolbox'),
-                scrollbars: true,
-                trashcan: true,
-                zoom: { controls: true, wheel: true, startScale: 0.85 }
-            });
         }
 
         function resetPlayerToMissionStart() {
@@ -840,23 +850,19 @@
             drawPlayerSiyo(ctx);
         }
 
-        // 2X LARGER CANOPY COMBINATIONS (BASE RADIUS ~32px)
+        // 2X LARGER CANOPY COMBINATIONS
         function drawCustomTreeCombo(ctx, x, y, combo) {
             if (combo === '3_layers') {
-                // Tumpuk 3: Besar (32), Lebih Kecil (22), Paling Kecil (12)
                 drawTreeCanopyLayer(ctx, x, y, 32, '#14532d', true);
                 drawTreeCanopyLayer(ctx, x - 4, y - 4, 22, '#16a34a', false);
                 drawTreeCanopyLayer(ctx, x - 7, y - 7, 12, '#86efac', false);
             } else if (combo === '2_small_tiny') {
-                // Tumpuk 2: Kecil (20) dan Paling Kecil (12)
                 drawTreeCanopyLayer(ctx, x, y, 20, '#15803d', true);
                 drawTreeCanopyLayer(ctx, x - 4, y - 4, 12, '#4ade80', false);
             } else if (combo === '2_large_small') {
-                // Tumpuk 2: Besar (32) dan Kecil (20)
                 drawTreeCanopyLayer(ctx, x, y, 32, '#14532d', true);
                 drawTreeCanopyLayer(ctx, x - 5, y - 5, 20, '#22c55e', false);
             } else if (combo === '2_large_tiny') {
-                // Tumpuk 2: Besar (32) dan Paling Kecil (12)
                 drawTreeCanopyLayer(ctx, x, y, 32, '#14532d', true);
                 drawTreeCanopyLayer(ctx, x - 6, y - 6, 12, '#86efac', false);
             } else if (combo === 'palm') {
@@ -939,12 +945,10 @@
             const h = lm.size[1] * CELL_SIZE;
 
             if (lm.id === 'hutan') {
-                // HUTAN KOTA & CAMPING GROUND: SEBAGAI KAWASAN VEGETASI ALAMI TANPA KOTAK GEDUNG
-                // Soft Area Shadow
+                // HUTAN KOTA & CAMPING GROUND: VEGETASI ALAMI TANPA GEDUNG
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
                 ctx.beginPath(); ctx.roundRect(x + 2, y + 2, w - 4, h - 4, 12); ctx.fill();
 
-                // Natural Forest Canopy Cluster
                 drawCustomTreeCombo(ctx, x + 24, y + 22, '3_layers');
                 drawCustomTreeCombo(ctx, x + w - 24, y + 22, '2_large_small');
                 drawCustomTreeCombo(ctx, x + w / 2, y + 26, 'palm');
